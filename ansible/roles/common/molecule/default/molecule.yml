@@ -13,12 +13,7 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
 provisioner:
   name: ansible
-  config_options:
-    defaults:
-      remote_tmp: /tmp/.ansible-remote/tmp
   inventory:
-    # 실제 inventory/hosts.ini의 [cluster] 그룹 구조를 흉내낸다.
-    # common 롤의 hosts_file.yml 태스크가 groups['cluster']를 참조하기 때문.
     hosts:
       cluster:
         hosts:
@@ -26,6 +21,7 @@ provisioner:
             ansible_host: 127.0.0.1
     group_vars:
       all:
+        ansible_remote_tmp: /tmp/.ansible-remote/tmp
         common_shared_user: hpcuser
         common_shared_uid: 2000
         common_shared_gid: 2000

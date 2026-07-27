@@ -13,12 +13,10 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
 provisioner:
   name: ansible
-  config_options:
-    defaults:
-      remote_tmp: /tmp/.ansible-remote/tmp
   inventory:
     group_vars:
       all:
+        ansible_remote_tmp: /tmp/.ansible-remote/tmp
         # 실제 키가 아니라 Molecule 테스트 전용 더미 값
         munge_key_b64: "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ=="
 verifier:
