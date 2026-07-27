@@ -1,0 +1,59 @@
+# {{ ansible_managed }}
+groups:
+  - name: cluster_alerts
+    rules:
+      - alert: NodeDown
+        expr: up{job="node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ '{{' }} $labels.instance {{ '}}' }} 응답 없음"
+          description: >-
+            node_exporter가 1분 넘게 스크레이프에 응답하지 않습니다.
+            노드 다운 또는 네트워크 단절 가능성.
+
+      - alert: SlurmQueueBacklog
+        expr: slurm_partition_job_state_total{state="PENDING"} >= 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "파티션 {{ '{{' }} $labels.partition {{ '}}' }} 대기 잡 적체"
+          description: "PENDING 잡이 5분 넘게 3개 이상 유지되고 있습니다."
+
+      - alert: DiskSpaceLow
+        expr: >-
+          (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: >-
+            {{ '{{' }} $labels.instance {{ '}}' }}:{{ '{{' }} $labels.mountpoint {{ '}}' }}
+            디스크 여유 공간 15% 미만
+
+      - alert: SlurmctldUnhealthy
+        expr: up{job="slurm"} == 0 or slurm_node_scrape_error > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "slurmctld 상태 이상 (헤드)"
+          description: >-
+            prometheus-slurm-exporter가 응답 없거나 sinfo/squeue 조회가
+            실패 중입니다.
+
+      - alert: InefficientJob
+        expr: >-
+          (sum by (slurmjobid) (rate(slurm_job_core_usage_total[3m])) / 1e9)
+            / (count by (slurmjobid) (slurm_job_core_usage_total)) < 0.4
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "잡 {{ '{{' }} $labels.slurmjobid {{ '}}' }} 자원 비효율 사용"
+          description: >-
+            요청한 코어 대비 실사용률이 40% 미만으로 3분 넘게 유지되고
+            있습니다.
