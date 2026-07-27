@@ -1,0 +1,8 @@
+---
+- name: Populate /etc/hosts with cluster node entries
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^[0-9.]+\s+{{ item }}$'
+    line: "{{ hostvars[item].ansible_host }} {{ item }}"
+    state: present
+  loop: "{{ groups['cluster'] }}"
