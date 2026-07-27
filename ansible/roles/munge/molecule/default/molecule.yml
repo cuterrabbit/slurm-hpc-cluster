@@ -21,7 +21,6 @@ provisioner:
     group_vars:
       all:
         ansible_remote_tmp: /tmp/.ansible-remote/tmp
-        # 실제 키가 아니라 Molecule 테스트 전용 더미 값
-        munge_key_b64: "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ=="
+        # munge_key_b64는 converge.yml에서 테스트용으로 그때그때 만든다.
 verifier:
   name: ansible

@@ -5,4 +5,5 @@
     regexp: '^[0-9.]+\s+{{ item }}$'
     line: "{{ hostvars[item].ansible_host | default('127.0.0.1') }} {{ item }}"
     state: present
+    unsafe_writes: true
   loop: "{{ groups['cluster'] }}"

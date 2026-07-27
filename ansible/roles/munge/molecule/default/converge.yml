@@ -2,5 +2,9 @@
 - name: Converge
   hosts: all
   become: true
+  tasks:
+    - name: Set a test-only munge key (never used outside Molecule)
+      ansible.builtin.set_fact:
+        munge_key_b64: "{{ ('A' * 1024) | b64encode }}"
   roles:
     - role: munge
