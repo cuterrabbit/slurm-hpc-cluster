@@ -13,6 +13,8 @@ jobs:
     defaults:
       run:
         working-directory: ansible
+    env:
+      ANSIBLE_ROLES_PATH: ${{ github.workspace }}/ansible/roles
     steps:
       - uses: actions/checkout@v4
 
