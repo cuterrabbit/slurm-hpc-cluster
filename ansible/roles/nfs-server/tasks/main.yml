@@ -1,0 +1,29 @@
+---
+- name: Ensure nfs-kernel-server is installed
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: true
+
+- name: Ensure /apps exists
+  ansible.builtin.file:
+    path: /apps
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure NFS exports
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Re-export NFS shares
+
+- name: Ensure nfs-kernel-server is enabled and running
+  ansible.builtin.systemd_service:
+    name: nfs-kernel-server
+    enabled: true
+    state: started

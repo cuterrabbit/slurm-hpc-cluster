@@ -1,0 +1,34 @@
+---
+- name: Ensure nfs-common is installed
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: true
+
+- name: Ensure /apps mount point exists
+  ansible.builtin.file:
+    path: /apps
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+# 워커의 /home 전체는 로컬 그대로 둔다 — node1/node2 관리자 계정은
+# 워커에만 존재하는 로컬 계정이라 /home을 통째로 덮으면 그 계정의
+# authorized_keys까지 가려져 SSH가 끊긴다(실제로 겪음). 잡을 실행하는
+# hpcuser의 홈 디렉토리만 노드 간에 공유한다.
+- name: Mount hpcuser home directory from head via NFS
+  ansible.posix.mount:
+    path: "/home/{{ nfs_client_shared_home_user }}"
+    src: "head:/home/{{ nfs_client_shared_home_user }}"
+    fstype: nfs
+    opts: rw,sync,hard,intr
+    state: mounted
+
+- name: Mount /apps from head via NFS
+  ansible.posix.mount:
+    path: /apps
+    src: "head:/apps"
+    fstype: nfs
+    opts: rw,sync,hard,intr
+    state: mounted
