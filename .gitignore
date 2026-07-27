@@ -1,0 +1,47 @@
+# Secrets
+*.vault_pass
+.vault_pass.txt
+ansible_vault_pass*
+*.pem
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.key
+.env
+.env.*
+
+# Ansible
+*.retry
+.ansible/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Molecule / test caches
+.cache/
+.molecule/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+
+# Terraform (이 프로젝트는 미사용 — ADR-0001 참조, 실수 커밋 방지용)
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Logs
+*.log
+
+# Markdown: README만 공개. docs/ 아래는 전부 로컬 작업용 (ADR/증거/트러블슈팅 등).
+*.md
+!README.md
