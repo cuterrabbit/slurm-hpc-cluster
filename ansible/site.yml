@@ -5,3 +5,19 @@
   roles:
     - common
     - munge
+    - slurm-common
+
+- name: Configure head node services
+  hosts: headnode
+  become: true
+  roles:
+    - mariadb
+    - nfs-server
+    - slurm-ctld
+
+- name: Configure worker nodes
+  hosts: workers
+  become: true
+  roles:
+    - nfs-client
+    - slurm-d

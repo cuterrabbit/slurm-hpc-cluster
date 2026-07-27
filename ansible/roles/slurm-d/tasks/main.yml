@@ -1,0 +1,14 @@
+---
+- name: Ensure SlurmdSpoolDir exists
+  ansible.builtin.file:
+    path: /var/spool/slurmd
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: '0755'
+
+- name: Ensure slurmd is enabled and running
+  ansible.builtin.systemd_service:
+    name: slurmd
+    enabled: true
+    state: started
