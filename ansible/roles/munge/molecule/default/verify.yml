@@ -1,0 +1,27 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check munge key permissions
+      ansible.builtin.stat:
+        path: /etc/munge/munge.key
+      register: munge_key_stat
+      failed_when: >
+        not munge_key_stat.stat.exists or
+        munge_key_stat.stat.mode != '0400' or
+        munge_key_stat.stat.pw_name != 'munge'
+
+    - name: Check munged is active
+      ansible.builtin.command: systemctl is-active munge
+      register: munge_status
+      changed_when: false
+      failed_when: munge_status.stdout != "active"
+
+    - name: Round-trip a local munge credential
+      ansible.builtin.shell:
+        cmd: set -o pipefail && munge -n | unmunge
+        executable: /bin/bash
+      changed_when: false
+      register: munge_roundtrip
+      failed_when: "'STATUS:          Success' not in munge_roundtrip.stdout"

@@ -1,0 +1,31 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: instance
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+provisioner:
+  name: ansible
+  inventory:
+    # 실제 inventory/hosts.ini의 [cluster] 그룹 구조를 흉내낸다.
+    # common 롤의 hosts_file.yml 태스크가 groups['cluster']를 참조하기 때문.
+    hosts:
+      cluster:
+        hosts:
+          instance:
+            ansible_host: 127.0.0.1
+    group_vars:
+      all:
+        hpc_shared_user: hpcuser
+        hpc_shared_uid: 2000
+        hpc_shared_gid: 2000
+        ssh_password_authentication: false
+verifier:
+  name: ansible
