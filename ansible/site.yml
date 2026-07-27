@@ -6,6 +6,7 @@
     - common
     - munge
     - slurm_common
+    - node_exporter
 
 - name: Configure head node services
   hosts: headnode
@@ -21,3 +22,4 @@
   roles:
     - nfs_client
     - slurm_d
+    - cgroup_exporter

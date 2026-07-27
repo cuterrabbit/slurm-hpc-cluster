@@ -1,0 +1,41 @@
+---
+- name: Ensure python dependencies for slurm-job-exporter are installed
+  ansible.builtin.apt:
+    name:
+      - python3-psutil
+      - python3-prometheus-client
+    state: present
+    update_cache: true
+
+- name: Ensure install directory exists
+  ansible.builtin.file:
+    path: /opt/slurm-job-exporter
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy slurm-job-exporter script (patched for this cluster)
+  ansible.builtin.copy:
+    src: slurm-job-exporter.py
+    dest: /opt/slurm-job-exporter/slurm-job-exporter.py
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart cgroup_exporter
+
+- name: Deploy systemd unit for slurm-job-exporter
+  ansible.builtin.template:
+    src: slurm-job-exporter.service.j2
+    dest: /etc/systemd/system/slurm-job-exporter.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart cgroup_exporter
+
+- name: Ensure slurm-job-exporter is enabled and running
+  ansible.builtin.systemd_service:
+    name: slurm-job-exporter
+    daemon_reload: true
+    enabled: true
+    state: started

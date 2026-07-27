@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+# 스크립트 자체는 GPU 라이브러리가 없으면 경고만 찍고 넘어가도록 만들어져 있어 별도 처리 없이도 안전하다.
+[Unit]
+Description=Slurm job exporter (cgroup 기반 잡 단위 메트릭)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/slurm-job-exporter/slurm-job-exporter.py --port {{ cgroup_exporter_port }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -22,6 +22,8 @@ SelectTypeParameters=CR_Core_Memory
 AccountingStorageType=accounting_storage/slurmdbd
 AccountingStorageHost=head
 JobCompType=jobcomp/none
+# cgroup 기반 잡별 자원 사용량 수집 — cgroup_exporter(slurm-job-exporter)가 이 데이터를 읽는다
+JobAcctGatherType=jobacct_gather/cgroup
 
 SlurmctldLogFile=/var/log/slurm/slurmctld.log
 SlurmdLogFile=/var/log/slurm/slurmd.log

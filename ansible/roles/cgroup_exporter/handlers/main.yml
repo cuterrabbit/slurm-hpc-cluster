@@ -1,0 +1,5 @@
+---
+- name: Restart cgroup_exporter
+  ansible.builtin.systemd_service:
+    name: slurm-job-exporter
+    state: restarted
