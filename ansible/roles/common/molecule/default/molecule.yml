@@ -12,14 +12,18 @@ platforms:
     cgroupns_mode: host
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock
 provisioner:
   name: ansible
   inventory:
+    # ansible_host는 일부러 안 건드린다 — Docker 드라이버가 exec 연결에 내부적으로
+    # 쓰는 값이라, 여기서 덮어쓰면 컨테이너 연결 자체가 깨진다(실제로 겪은 문제).
     hosts:
       cluster:
         hosts:
-          instance:
-            ansible_host: 127.0.0.1
+          instance: {}
     group_vars:
       all:
         ansible_remote_tmp: /tmp/.ansible-remote/tmp

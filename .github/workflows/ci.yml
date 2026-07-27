@@ -60,6 +60,8 @@ jobs:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
           ANSIBLE_ROLES_PATH: ${{ github.workspace }}/ansible/roles
+          # 또 실패하면 바로 원인 볼 수 있게 verbose 로그 켜둠
+          ANSIBLE_VERBOSITY: "3"
 
   deploy:
     needs: [lint, molecule]
