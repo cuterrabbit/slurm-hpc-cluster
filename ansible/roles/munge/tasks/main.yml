@@ -1,0 +1,20 @@
+---
+- name: Ensure munge is installed
+  ansible.builtin.apt:
+    name: munge
+    state: present
+
+- name: Deploy shared munge key
+  ansible.builtin.copy:
+    content: "{{ munge_key_b64 | b64decode }}"
+    dest: /etc/munge/munge.key
+    owner: munge
+    group: munge
+    mode: '0400'
+  notify: restart munged
+
+- name: Ensure munged is enabled and running
+  ansible.builtin.service:
+    name: munge
+    enabled: true
+    state: started
