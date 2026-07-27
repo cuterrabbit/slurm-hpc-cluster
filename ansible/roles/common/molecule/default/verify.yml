@@ -7,14 +7,17 @@
       ansible.builtin.command: id hpcuser
       register: hpcuser_id
       changed_when: false
-      failed_when: "'uid=2000(hpcuser) gid=2000(hpcuser)' not in hpcuser_id.stdout"
+      failed_when: >-
+        'uid=2000(hpcuser) gid=2000(hpcuser)' not in hpcuser_id.stdout
 
     - name: Check /etc/hosts contains this node's entry
       ansible.builtin.command: grep -q '127.0.0.1 instance' /etc/hosts
       changed_when: false
 
     - name: Check SSH hardening drop-in disables password auth
-      ansible.builtin.command: grep -q 'PasswordAuthentication no' /etc/ssh/sshd_config.d/99-hardening.conf
+      ansible.builtin.command: >-
+        grep -q 'PasswordAuthentication no'
+        /etc/ssh/sshd_config.d/99-hardening.conf
       changed_when: false
 
     - name: Check chrony is active

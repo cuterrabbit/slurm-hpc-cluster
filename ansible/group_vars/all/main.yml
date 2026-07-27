@@ -1,3 +1,4 @@
+---
 # 공개 가능한 공유 변수. 시크릿은 group_vars/all/vault.yml에 별도로
 
 hpc_shared_user: hpcuser

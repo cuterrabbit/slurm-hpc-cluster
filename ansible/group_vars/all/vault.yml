@@ -1,3 +1,4 @@
+---
 # 시크릿 — Ansible Vault로 암호화됨. 평문 절대 커밋 금지.
 munge_key_b64: !vault |
           $ANSIBLE_VAULT;1.1;AES256

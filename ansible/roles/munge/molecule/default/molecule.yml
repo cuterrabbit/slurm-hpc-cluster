@@ -16,8 +16,7 @@ provisioner:
   inventory:
     group_vars:
       all:
-        # 실제 키가 아니라 Molecule 테스트 전용 더미 값. group_vars/all/vault.yml의
-        # 진짜 munge_key_b64(Vault 암호화)는 CI 1단에서 복호화하지 않는다.
-        munge_key_b64: "dGVzdC1tdW5nZS1rZXktZm9yLW1vbGVjdWxlLXRlc3Rpbmctb25seS1kby1ub3QtdXNlLWluLXByb2R1Y3Rpb24tMTIzNDU2Nzg5MA=="
+        # 실제 키가 아니라 Molecule 테스트 전용 더미 값
+        munge_key_b64: "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ=="
 verifier:
   name: ansible
