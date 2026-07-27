@@ -3,6 +3,7 @@
   ansible.builtin.apt:
     name: munge
     state: present
+    update_cache: true
 
 - name: Deploy shared munge key
   ansible.builtin.copy:

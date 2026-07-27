@@ -13,6 +13,9 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
 provisioner:
   name: ansible
+  config_options:
+    defaults:
+      remote_tmp: /tmp/.ansible-remote/tmp
   inventory:
     group_vars:
       all:
