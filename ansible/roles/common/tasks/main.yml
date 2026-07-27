@@ -1,5 +1,12 @@
 ---
-- import_tasks: users.yml
-- import_tasks: hosts_file.yml
-- import_tasks: ntp.yml
-- import_tasks: ssh_hardening.yml
+- name: Configure shared cluster user
+  ansible.builtin.import_tasks: users.yml
+
+- name: Configure /etc/hosts
+  ansible.builtin.import_tasks: hosts_file.yml
+
+- name: Configure NTP
+  ansible.builtin.import_tasks: ntp.yml
+
+- name: Configure SSH hardening
+  ansible.builtin.import_tasks: ssh_hardening.yml

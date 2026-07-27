@@ -5,10 +5,10 @@
   tasks:
     - name: Check hpcuser UID/GID
       ansible.builtin.command: id hpcuser
-      register: hpcuser_id
+      register: common_hpcuser_id
       changed_when: false
       failed_when: >-
-        'uid=2000(hpcuser) gid=2000(hpcuser)' not in hpcuser_id.stdout
+        'uid=2000(hpcuser) gid=2000(hpcuser)' not in common_hpcuser_id.stdout
 
     - name: Check /etc/hosts contains this node's entry
       ansible.builtin.command: grep -q '127.0.0.1 instance' /etc/hosts
@@ -20,8 +20,10 @@
         /etc/ssh/sshd_config.d/99-hardening.conf
       changed_when: false
 
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
     - name: Check chrony is active
-      ansible.builtin.command: systemctl is-active chrony
-      register: chrony_status
-      changed_when: false
-      failed_when: chrony_status.stdout != "active"
+      ansible.builtin.assert:
+        that:
+          - "ansible_facts.services['chrony.service'].state == 'running'"

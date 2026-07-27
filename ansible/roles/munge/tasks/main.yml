@@ -11,7 +11,7 @@
     owner: munge
     group: munge
     mode: '0400'
-  notify: restart munged
+  notify: Restart munged
 
 - name: Ensure munged is enabled and running
   ansible.builtin.service:

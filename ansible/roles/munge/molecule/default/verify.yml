@@ -12,11 +12,13 @@
         munge_key_stat.stat.mode != '0400' or
         munge_key_stat.stat.pw_name != 'munge'
 
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
     - name: Check munged is active
-      ansible.builtin.command: systemctl is-active munge
-      register: munge_status
-      changed_when: false
-      failed_when: munge_status.stdout != "active"
+      ansible.builtin.assert:
+        that:
+          - "ansible_facts.services['munge.service'].state == 'running'"
 
     - name: Round-trip a local munge credential
       ansible.builtin.shell:

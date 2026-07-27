@@ -23,9 +23,9 @@ provisioner:
             ansible_host: 127.0.0.1
     group_vars:
       all:
-        hpc_shared_user: hpcuser
-        hpc_shared_uid: 2000
-        hpc_shared_gid: 2000
-        ssh_password_authentication: false
+        common_shared_user: hpcuser
+        common_shared_uid: 2000
+        common_shared_gid: 2000
+        common_ssh_password_authentication: false
 verifier:
   name: ansible
