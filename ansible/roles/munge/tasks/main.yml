@@ -15,7 +15,7 @@
   notify: Restart munged
 
 - name: Ensure munged is enabled and running
-  ansible.builtin.service:
+  ansible.builtin.systemd_service:
     name: munge
     enabled: true
     state: started

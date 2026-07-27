@@ -6,7 +6,7 @@
     update_cache: true
 
 - name: Ensure chrony is enabled and running
-  ansible.builtin.service:
+  ansible.builtin.systemd_service:
     name: chrony
     enabled: true
     state: started
