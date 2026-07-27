@@ -1,9 +1,11 @@
-name: Lint and role tests
+---
+name: CI/CD
 
-on:
+"on":
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch: {}
 
 jobs:
   lint:
@@ -55,3 +57,27 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
+
+  deploy:
+    needs: [lint, molecule]
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, slurm-head]
+    env:
+      VAULT_PASS_FILE: /tmp/ci_vault_pass.txt
+    defaults:
+      run:
+        working-directory: ansible
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write vault password file
+        run: echo "$ANSIBLE_VAULT_PASSWORD" > "$VAULT_PASS_FILE"
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+
+      - name: Run site.yml
+        run: ansible-playbook site.yml --vault-password-file "$VAULT_PASS_FILE"
+
+      - name: Clean up vault password file
+        if: always()
+        run: rm -f "$VAULT_PASS_FILE"
