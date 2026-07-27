@@ -1,0 +1,6 @@
+---
+- name: Configure all cluster nodes
+  hosts: cluster
+  become: true
+  roles:
+    - common

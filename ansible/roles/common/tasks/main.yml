@@ -1,0 +1,5 @@
+---
+- import_tasks: users.yml
+- import_tasks: hosts_file.yml
+- import_tasks: ntp.yml
+- import_tasks: ssh_hardening.yml
