@@ -24,6 +24,7 @@
 - name: Create slurm accounting database
   ansible.builtin.command: mysql -e "CREATE DATABASE slurm_acct_db"
   when: "'slurm_acct_db' not in mariadb_db_check.stdout"
+  changed_when: true
 
 - name: Check whether slurm DB user exists
   ansible.builtin.command: >-
@@ -39,4 +40,5 @@
     GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurm'@'localhost';
     FLUSH PRIVILEGES;"
   when: "'slurm' not in mariadb_user_check.stdout"
+  changed_when: true
   no_log: true
