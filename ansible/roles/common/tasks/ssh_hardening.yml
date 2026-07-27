@@ -13,6 +13,14 @@
     group: root
     mode: '0755'
 
+- name: Ensure sshd privilege separation directory exists
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Deploy SSH hardening drop-in
   ansible.builtin.template:
     src: 99-hardening.conf.j2
