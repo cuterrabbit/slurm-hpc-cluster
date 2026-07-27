@@ -10,8 +10,10 @@
       failed_when: >-
         'uid=2000(hpcuser) gid=2000(hpcuser)' not in common_hpcuser_id.stdout
 
+
     - name: Check /etc/hosts contains this node's entry
-      ansible.builtin.command: grep -q '127.0.0.1 instance' /etc/hosts
+      ansible.builtin.command: >-
+        grep -qE '^[0-9.]+[[:space:]]+instance$' /etc/hosts
       changed_when: false
 
     - name: Check SSH hardening drop-in disables password auth
