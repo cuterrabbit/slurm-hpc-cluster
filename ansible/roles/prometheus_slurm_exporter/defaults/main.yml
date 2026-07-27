@@ -1,0 +1,5 @@
+---
+prometheus_slurm_exporter_version: "1.8.0"
+prometheus_slurm_exporter_checksum: >-
+  sha256:1157f7dcd1b4a66d98c8113d3d4a36bb1f2f0dfe77a78c6c6b6da5f579e8b2b2
+prometheus_slurm_exporter_port: 9092

@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Prometheus Slurm Exporter
+After=network.target slurmctld.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/prometheus-slurm-exporter -web.listen-address=:{{ prometheus_slurm_exporter_port }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,42 @@
+---
+- name: Set exporter package filename
+  ansible.builtin.set_fact:
+    prometheus_slurm_exporter_deb_name: >-
+      {{ 'prometheus-slurm-exporter_' ~
+      prometheus_slurm_exporter_version ~
+      '_linux_amd64.deb' }}
+
+- name: Set exporter download URL
+  ansible.builtin.set_fact:
+    prometheus_slurm_exporter_url: >-
+      {{ 'https://github.com/rivosinc/prometheus-slurm-exporter' ~
+      '/releases/download/v' ~
+      prometheus_slurm_exporter_version ~ '/' ~
+      prometheus_slurm_exporter_deb_name }}
+
+- name: Download prometheus-slurm-exporter package
+  ansible.builtin.get_url:
+    url: "{{ prometheus_slurm_exporter_url }}"
+    dest: "/tmp/{{ prometheus_slurm_exporter_deb_name }}"
+    checksum: "{{ prometheus_slurm_exporter_checksum }}"
+    mode: '0644'
+
+- name: Install prometheus-slurm-exporter package
+  ansible.builtin.apt:
+    deb: "/tmp/{{ prometheus_slurm_exporter_deb_name }}"
+
+- name: Deploy systemd unit for prometheus-slurm-exporter
+  ansible.builtin.template:
+    src: prometheus-slurm-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-slurm-exporter.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart prometheus_slurm_exporter
+
+- name: Ensure prometheus-slurm-exporter is enabled and running
+  ansible.builtin.systemd_service:
+    name: prometheus-slurm-exporter
+    daemon_reload: true
+    enabled: true
+    state: started
