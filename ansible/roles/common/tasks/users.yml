@@ -1,0 +1,15 @@
+---
+- name: Ensure shared cluster group exists with fixed GID
+  ansible.builtin.group:
+    name: "{{ hpc_shared_user }}"
+    gid: "{{ hpc_shared_gid }}"
+    state: present
+
+- name: Ensure shared cluster user exists with fixed UID
+  ansible.builtin.user:
+    name: "{{ hpc_shared_user }}"
+    uid: "{{ hpc_shared_uid }}"
+    group: "{{ hpc_shared_user }}"
+    shell: /bin/bash
+    create_home: true
+    state: present
