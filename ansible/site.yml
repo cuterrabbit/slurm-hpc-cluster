@@ -15,6 +15,11 @@
     - mariadb
     - nfs_server
     - slurm_ctld
+    - prometheus_slurm_exporter
+    - prometheus
+    - alertmanager
+    - grafana_repo
+    - grafana
 
 - name: Configure worker nodes
   hosts: workers
