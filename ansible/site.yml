@@ -7,6 +7,8 @@
     - munge
     - slurm_common
     - node_exporter
+    - grafana_repo
+    - promtail
 
 - name: Configure head node services
   hosts: headnode
@@ -18,7 +20,7 @@
     - prometheus_slurm_exporter
     - prometheus
     - alertmanager
-    - grafana_repo
+    - loki
     - grafana
 
 - name: Configure worker nodes

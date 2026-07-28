@@ -34,6 +34,15 @@
     mode: '0644'
   notify: Restart grafana
 
+- name: Provision Loki datasource
+  ansible.builtin.template:
+    src: loki_datasource.yml.j2
+    dest: /etc/grafana/provisioning/datasources/loki.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart grafana
+
 - name: Ensure Grafana dashboards provisioning directory exists
   ansible.builtin.file:
     path: /etc/grafana/provisioning/dashboards
