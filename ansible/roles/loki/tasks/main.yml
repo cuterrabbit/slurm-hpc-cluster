@@ -1,0 +1,29 @@
+---
+- name: Ensure loki is installed
+  ansible.builtin.apt:
+    name: loki
+    state: present
+    update_cache: true
+
+- name: Ensure loki data directory exists
+  ansible.builtin.file:
+    path: /var/lib/loki
+    state: directory
+    owner: loki
+    group: nogroup
+    mode: '0750'
+
+- name: Deploy loki config.yml
+  ansible.builtin.template:
+    src: loki_config.yml.j2
+    dest: /etc/loki/config.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart loki
+
+- name: Ensure loki is enabled and running
+  ansible.builtin.systemd_service:
+    name: loki
+    enabled: true
+    state: started
