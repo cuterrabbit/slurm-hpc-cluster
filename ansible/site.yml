@@ -9,6 +9,7 @@
     - node_exporter
     - grafana_repo
     - promtail
+    - network_gateway
 
 - name: Configure head node services
   hosts: headnode

@@ -1,0 +1,8 @@
+---
+- name: Save iptables rules
+  ansible.builtin.command: netfilter-persistent save
+  when: "'headnode' in group_names"
+
+- name: Apply netplan
+  ansible.builtin.command: netplan apply
+  when: "'workers' in group_names"

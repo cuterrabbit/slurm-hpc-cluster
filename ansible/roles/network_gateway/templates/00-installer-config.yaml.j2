@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+network:
+  ethernets:
+    enp0s3:
+      dhcp4: true
+      dhcp6: true
+      dhcp4-overrides:
+        use-routes: false
+      match:
+        macaddress: {{ ansible_facts['enp0s3']['macaddress'] }}
+      set-name: enp0s3
+    enp0s8:
+      addresses: [{{ ansible_facts['enp0s8']['ipv4']['address'] }}/24]
+      routes:
+        - to: default
+          via: {{ network_gateway_head_ip }}
+  version: 2

@@ -1,0 +1,46 @@
+---
+# head: IP forwarding + NAT masquerade — node1/node2가 head를 거쳐 외부망에 나갈 수 있게 함
+- name: Enable IP forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  when: "'headnode' in group_names"
+
+- name: Install iptables-persistent for NAT rule persistence
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+  when: "'headnode' in group_names"
+
+- name: Check if MASQUERADE rule for cluster subnet already exists
+  ansible.builtin.command: >
+    iptables -t nat -C POSTROUTING -s {{ network_gateway_internal_subnet }}
+    -o {{ network_gateway_external_iface }} -j MASQUERADE
+  register: network_gateway_masquerade_check
+  failed_when: false
+  changed_when: false
+  when: "'headnode' in group_names"
+
+- name: Add MASQUERADE rule for cluster subnet
+  ansible.builtin.command: >
+    iptables -t nat -A POSTROUTING -s {{ network_gateway_internal_subnet }}
+    -o {{ network_gateway_external_iface }} -j MASQUERADE
+  when: "'headnode' in group_names and network_gateway_masquerade_check.rc != 0"
+  notify: Save iptables rules
+
+# workers: 기본 경로를 head 경유로 전환. NAT 어댑터 자체는 아직 유지(dhcp4-overrides로 라우팅에서만 제외) —
+# 검증 후 별도로 VirtualBox에서 어댑터를 제거하는 단계로 넘어감.
+# 같은 인터페이스를 여러 netplan 파일에 나눠 정의하면 병합 순서에 따라 예상 못한 결과가 날 수 있어서,
+# 기존 파일 전체를 대체하는 방식으로 간다(파일 추가 아님).
+- name: Deploy netplan config routing default traffic via head
+  ansible.builtin.template:
+    src: 00-installer-config.yaml.j2
+    dest: /etc/netplan/00-installer-config.yaml
+    owner: root
+    group: root
+    mode: '0600'
+  when: "'workers' in group_names"
+  notify: Apply netplan
