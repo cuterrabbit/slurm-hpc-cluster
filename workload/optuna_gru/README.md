@@ -56,6 +56,13 @@ apptainer exec --bind /apps/workload/optuna_gru:/workload --pwd /workload /apps/
 
 여러 노드에 걸쳐 Slurm으로 분산 실행할 때는 `run_trial_worker.sh`를 `sbatch`로 제출한다(직접 `apptainer exec`를 셸에서 돌리면 Slurm의 cgroup 메모리 격리를 못 받는다).
 
+```bash
+sbatch --mem=1G --cpus-per-task=1 run_trial_worker.sh 10 mysql gru-loadtest
+sbatch --mem=1G --cpus-per-task=1 run_trial_worker.sh 10 sqlite gru-loadtest
+```
+
+`mysql` 백엔드는 비밀번호를 커맨드라인 인자로 받지 않는다 — `sacct`가 잡 커맨드라인을 그대로 영구 기록하기 때문에, 비밀번호는 `/apps/containers/optuna_db_password`(Ansible이 Vault에서 배포, `hpcuser`만 읽기 가능)에서 스크립트가 직접 읽는다.
+
 ## 트라이얼당 자원 고정
 
 `--cpu-threads`/`--interop-threads`로 프로세스당 PyTorch CPU 스레드 수를 고정할 수 있다 — 병렬도(동시 프로세스 수)를 늘려가며 처리량을 측정할 때, 트라이얼 하나가 쓰는 자원 자체는 일정하게 유지하기 위함.
