@@ -355,7 +355,7 @@ per elapsed cycle)',
         else:
             # 업스트림 원본은 "system.slice/slurmstepd.scope/job_*"를 가정하는데,
             # 이 클러스터(Ubuntu 26.04 + Slurm 25.11, cgroup v2)에서는 스코프 이름에
-            # 호스트명 접두사가 붙는다 (예: node1_slurmstepd.scope). 실측 확인 후 패치.
+            # 호스트명 접두사가 붙는다 (예: node1_slurmstepd.scope).
             jobs_glob = "/sys/fs/cgroup/system.slice/*slurmstepd.scope/job_*"
         for job_dir in glob.glob(jobs_glob):
             job = job_dir.split('/')[-1].split('_')[1]

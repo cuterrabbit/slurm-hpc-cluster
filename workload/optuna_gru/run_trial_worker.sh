@@ -1,4 +1,5 @@
 #!/bin/bash
+# Usage: sbatch run_trial_worker.sh <trials> <storage-url> <study-name>
 set -euo pipefail
 
 TRIALS="$1"

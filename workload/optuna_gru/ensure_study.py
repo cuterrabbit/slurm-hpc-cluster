@@ -1,10 +1,3 @@
-"""Create (or confirm) an Optuna study once before launching concurrent workers.
-
-Multiple worker processes calling optuna.create_study(..., load_if_exists=True)
-at the same time can race to create the study schema tables, causing
-"table already exists" errors. Run this once before submitting concurrent
-workers so the schema and study row already exist.
-"""
 import argparse
 
 import optuna

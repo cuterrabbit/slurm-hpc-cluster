@@ -46,6 +46,7 @@ apptainer exec --bind /apps/workload/optuna_gru:/workload --pwd /workload /apps/
   --storage "sqlite:////workload/data/study.db" \
   --study-name gru-loadtest
 
+# MariaDB(ADR-0011) storage로 — SQLite-on-NFS 동시성 문제를 피하려면 이쪽.
 # 워커 노드에서 돌 수도 있으니 127.0.0.1이 아니라 head 호스트명 사용.
 apptainer exec --bind /apps/workload/optuna_gru:/workload --pwd /workload /apps/containers/optuna_gru.sif \
   python -m src.models.sequence_tune --model gru --trials 10 \
