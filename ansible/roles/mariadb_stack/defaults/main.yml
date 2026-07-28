@@ -1,2 +1,3 @@
 ---
 mariadb_stack_image: mariadb:11.8.6
+mariadb_stack_client_subnet: 192.168.56.%

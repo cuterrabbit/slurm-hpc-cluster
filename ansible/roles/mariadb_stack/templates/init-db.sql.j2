@@ -2,4 +2,11 @@
 CREATE DATABASE IF NOT EXISTS slurm_acct_db;
 CREATE USER IF NOT EXISTS 'slurm'@'127.0.0.1' IDENTIFIED BY '{{ slurmdbd_db_password }}';
 GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurm'@'127.0.0.1';
+
+-- optuna_gru 워크로드용 전용 계정/DB. 워커 노드에서도 접속해야 해서
+-- 127.0.0.1이 아니라 클러스터 서브넷 전체를 허용.
+CREATE DATABASE IF NOT EXISTS optuna_db;
+CREATE USER IF NOT EXISTS 'optuna'@'{{ mariadb_stack_client_subnet }}' IDENTIFIED BY '{{ optuna_db_password }}';
+GRANT ALL PRIVILEGES ON optuna_db.* TO 'optuna'@'{{ mariadb_stack_client_subnet }}';
+
 FLUSH PRIVILEGES;
