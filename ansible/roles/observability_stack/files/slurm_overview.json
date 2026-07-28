@@ -4,62 +4,89 @@
   "tags": ["slurm"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 4,
   "refresh": "30s",
   "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "node",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "query": "label_values(up{job=\"node\"}, instance)", "refId": "nodeVar" },
+        "regex": "",
+        "multi": true,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" },
+        "refresh": 2
+      }
+    ]
+  },
   "panels": [
+    { "id": 100, "type": "row", "title": "개요", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+
     {
       "id": 1,
-      "type": "bargauge",
+      "type": "stat",
       "title": "노드 상태",
+      "description": "상태별 노드 수. down/drain이 0보다 크면 빨간색.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 1, "w": 12, "h": 8 },
       "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slurm_node_count_per_state",
-          "legendFormat": "{{state}}",
-          "refId": "A"
-        }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_node_count_per_state{state=~\"idle.*\"}) or vector(0)", "legendFormat": "idle", "refId": "A", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_node_count_per_state{state=~\"alloc.*\"}) or vector(0)", "legendFormat": "alloc", "refId": "B", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_node_count_per_state{state=~\"mix.*\"}) or vector(0)", "legendFormat": "mix", "refId": "C", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_node_count_per_state{state=~\"comp.*\"}) or vector(0)", "legendFormat": "completing", "refId": "D", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_node_count_per_state{state=~\"down.*|drain.*|unk.*\"}) or vector(0)", "legendFormat": "down/drain/unknown", "refId": "E", "instant": true }
       ],
       "fieldConfig": {
-        "defaults": { "min": 0, "unit": "short" },
-        "overrides": []
+        "defaults": {
+          "min": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "down/drain/unknown" }, "properties": [
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ] } }
+          ] }
+        ]
       },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      }
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal", "colorMode": "background", "textMode": "value_and_name" }
     },
+
     {
       "id": 2,
       "type": "stat",
-      "title": "큐 대기 잡 수",
+      "title": "큐 대기 잡 수 (사유별)",
+      "description": "잡이 PENDING인 이유별 개수 — 왜 큐가 밀리는지 바로 확인",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 8 },
+      "gridPos": { "x": 12, "y": 1, "w": 12, "h": 8 },
       "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(slurm_partition_job_state_total{state=\"PENDING\"}) or vector(0)",
-          "legendFormat": "PENDING",
-          "refId": "A"
-        }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_pending_reason_total{reason=\"Resources\"}) or vector(0)", "legendFormat": "Resources", "refId": "A", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_pending_reason_total{reason=\"Priority\"}) or vector(0)", "legendFormat": "Priority", "refId": "B", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_pending_reason_total{reason=\"BeginTime\"}) or vector(0)", "legendFormat": "BeginTime", "refId": "C", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_pending_reason_total{reason=\"Dependency\"}) or vector(0)", "legendFormat": "Dependency", "refId": "D", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(slurm_pending_reason_total{reason!~\"Resources|Priority|BeginTime|Dependency|None\"}) or vector(0)", "legendFormat": "기타", "refId": "E", "instant": true }
       ],
       "fieldConfig": {
         "defaults": { "min": 0, "unit": "short" },
         "overrides": []
       },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      }
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal", "colorMode": "value" }
     },
+
     {
       "id": 3,
       "type": "bargauge",
       "title": "파티션 점유율 (%)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 8 },
+      "gridPos": { "x": 0, "y": 9, "w": 12, "h": 6 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -70,60 +97,237 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "min": 0,
-          "max": 100,
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 70 },
-              { "color": "red", "value": 90 }
-            ]
-          }
+          "min": 0, "max": 100, "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 70 },
+            { "color": "red", "value": 90 }
+          ] }
         },
         "overrides": []
       },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      }
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
+
     {
       "id": 4,
-      "type": "timeseries",
-      "title": "잡별 요청 대비 실사용률 (%)",
-      "description": "cgroup_exporter의 slurm_job_core_usage_total 기준 — 할당된 코어 수 대비 평균 사용률. InefficientJob 알림 규칙(<40%)과 동일한 산식.",
+      "type": "bargauge",
+      "title": "파티션 여유 자원",
+      "description": "실제 남은 CPU 코어 수 / 메모리 — 점유율(%)과 함께 보면 '지금 잡이 몇 개 더 들어갈 수 있는지' 감이 옴",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+      "gridPos": { "x": 12, "y": 9, "w": 12, "h": 6 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "slurm_partition_idle_cpus", "legendFormat": "{{partition}} 여유 CPU", "refId": "A", "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "slurm_partition_free_mem", "legendFormat": "{{partition}} 여유 메모리", "refId": "B", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": { "min": 0, "unit": "short" },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": ".*여유 메모리.*" }, "properties": [ { "id": "unit", "value": "bytes" } ] }
+        ]
+      },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+
+    { "id": 101, "type": "row", "title": "노드별 리소스 ($node)", "gridPos": { "x": 0, "y": 15, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "CPU 사용률 (%)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "(sum by (slurmjobid) (rate(slurm_job_core_usage_total[3m])) / 1e9) / (count by (slurmjobid) (slurm_job_core_usage_total)) * 100",
-          "legendFormat": "job {{slurmjobid}}",
+          "expr": "label_replace(100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$node\"}[5m])) * 100), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")",
+          "legendFormat": "{{node}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "메모리 사용률 (%)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "label_replace((1 - node_memory_MemAvailable_bytes{instance=~\"$node\"} / node_memory_MemTotal_bytes{instance=~\"$node\"}) * 100, \"node\", \"$1\", \"instance\", \"([^:]+):.*\")",
+          "legendFormat": "{{node}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "디스크 I/O 처리량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_disk_read_bytes_total{instance=~\"$node\", device=\"sda\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} SSD 읽기", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_disk_written_bytes_total{instance=~\"$node\", device=\"sda\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} SSD 쓰기", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "Bps", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "네트워크 처리량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_receive_bytes_total{instance=~\"$node\", device=\"enp0s3\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} NAT 수신", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_receive_bytes_total{instance=~\"$node\", device=\"enp0s8\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 호스트전용 수신", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_transmit_bytes_total{instance=~\"$node\", device=\"enp0s3\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} NAT 송신", "refId": "C" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_transmit_bytes_total{instance=~\"$node\", device=\"enp0s8\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 호스트전용 송신", "refId": "D" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "Bps", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 14,
+      "type": "bargauge",
+      "title": "디스크 사용량 (%, 루트 파티션)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 32, "w": 8, "h": 6 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace((1 - node_filesystem_avail_bytes{instance=~\"$node\", mountpoint=\"/\"} / node_filesystem_size_bytes{instance=~\"$node\", mountpoint=\"/\"}) * 100, \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}}", "refId": "A", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": { "min": 0, "max": 100, "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 70 },
+            { "color": "red", "value": 90 }
+          ] } },
+        "overrides": []
+      },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "로드 애버리지 (1분)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 32, "w": 16, "h": 6 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(node_load1{instance=~\"$node\"}, \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "min": 0, "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+
+    { "id": 102, "type": "row", "title": "잡 · 스케줄러", "gridPos": { "x": 0, "y": 38, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+
+    {
+      "id": 20,
+      "type": "table",
+      "title": "실행 중인 잡 — 코어 실사용률",
+      "description": "잡별 요청 대비 실사용률(%). 테이블이라 잡이 생기고 없어져도 legend가 안 늘어남 — 열 헤더 클릭으로 정렬(낮은 순으로 보면 비효율 잡부터 확인 가능).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 39, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "(sum by (slurmjobid, user) (rate(slurm_job_core_usage_total[3m])) / 1e9) / (count by (slurmjobid, user) (slurm_job_core_usage_total)) * 100",
+          "format": "table",
+          "instant": true,
           "refId": "A"
         }
       ],
       "fieldConfig": {
-        "defaults": {
-          "min": 0,
-          "max": 100,
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "orange", "value": 40 },
-              { "color": "green", "value": 70 }
-            ]
-          }
-        },
-        "overrides": []
+        "defaults": { "unit": "percent" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "slurmjobid" }, "properties": [ { "id": "unit", "value": "none" } ] },
+          { "matcher": { "id": "byName", "options": "user" }, "properties": [ { "id": "unit", "value": "none" } ] }
+        ]
       },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      }
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Value", "desc": false }] },
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "job": true, "instance": true } } }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "잡 메모리 사용량 vs 한도",
+      "description": "cgroup 기준 실제 메모리(RSS)와 잡에 할당된 메모리 한도 — Phase 5에서 겪은 OOM 문제를 실시간으로 볼 수 있는 패널. 한도에 가까워지면 OOM 위험.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 39, "w": 12, "h": 8 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "slurm_job_memory_rss", "legendFormat": "job {{slurmjobid}} ({{user}}) 실사용", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "slurm_job_memory_limit", "legendFormat": "job {{slurmjobid}} ({{user}}) 한도", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 }, "overrides": [
+        { "matcher": { "id": "byRegexp", "options": ".*한도.*" }, "properties": [ { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } } ] }
+      ] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "비효율 잡 수 추이 (실사용률 < 40%)",
+      "description": "InefficientJob 알림 규칙과 동일 기준. 이 선이 계속 0보다 크면 클러스터 자원이 낭비되고 있다는 뜻.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 47, "w": 24, "h": 6 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "count((sum by (slurmjobid) (rate(slurm_job_core_usage_total[3m])) / 1e9) / (count by (slurmjobid) (slurm_job_core_usage_total)) < 0.4) or vector(0)", "legendFormat": "비효율 잡 수", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "min": 0, "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } }
+    },
+
+    { "id": 103, "type": "row", "title": "로그", "gridPos": { "x": 0, "y": 53, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+
+    {
+      "id": 30,
+      "type": "logs",
+      "title": "전체 로그 (slurm / munge)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 0, "y": 54, "w": 12, "h": 10 },
+      "targets": [
+        { "datasource": { "type": "loki", "uid": "loki" }, "expr": "{job=~\"slurm|munge\"}", "refId": "A" }
+      ],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+    {
+      "id": 31,
+      "type": "logs",
+      "title": "에러 / 경고 로그만",
+      "description": "promtail이 자동으로 붙이는 detected_level 라벨 기준 필터",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 12, "y": 54, "w": 12, "h": 10 },
+      "targets": [
+        { "datasource": { "type": "loki", "uid": "loki" }, "expr": "{job=~\"slurm|munge\"} | detected_level=~\"error|warn\"", "refId": "A" }
+      ],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+
+    { "id": 104, "type": "row", "title": "알림", "gridPos": { "x": 0, "y": 64, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+
+    {
+      "id": 40,
+      "type": "table",
+      "title": "현재 발화 중인 알림",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 65, "w": 24, "h": 6 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "ALERTS{alertstate=\"firing\"}", "format": "table", "instant": true, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true },
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true } } }
+      ]
     }
   ]
 }
