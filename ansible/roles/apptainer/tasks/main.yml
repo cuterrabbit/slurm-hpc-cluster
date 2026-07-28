@@ -1,11 +1,13 @@
 ---
 # squashfuse/fuse2fs: 언프리빌리지드 SIF 마운트에 필요 (ADR-0010)
-- name: Ensure apptainer and FUSE mount helpers are installed
+# uidmap(newuidmap/newgidmap)
+- name: Ensure apptainer, FUSE mount helpers, and uidmap are installed
   ansible.builtin.apt:
     name:
       - apptainer=1.4.5-1
       - squashfuse
       - fuse2fs
+      - uidmap
     state: present
     update_cache: true
 
@@ -17,7 +19,7 @@
     group: root
     mode: '0755'
 
-# AppArmor userns 제한 우회, apptainer 바이너리 하나로만 범위 한정 (ADR-0010)
+# AppArmor userns 제한 우회, apptainer 바이너리 하나로만 범위 한정
 - name: Deploy AppArmor profile allowing apptainer unprivileged user namespaces
   ansible.builtin.copy:
     src: apptainer-apparmor.profile
