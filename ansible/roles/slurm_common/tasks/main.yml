@@ -14,6 +14,9 @@
     owner: root
     group: root
     mode: '0644'
+  notify:
+    - Restart slurmctld
+    - Restart slurmd
 
 - name: Deploy cgroup.conf
   ansible.builtin.template:
@@ -22,6 +25,9 @@
     owner: root
     group: root
     mode: '0644'
+  notify:
+    - Restart slurmctld
+    - Restart slurmd
 
 - name: Ensure /var/log/slurm exists
   ansible.builtin.file:

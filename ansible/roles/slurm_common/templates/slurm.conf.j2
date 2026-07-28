@@ -21,14 +21,26 @@ SelectTypeParameters=CR_Core_Memory
 
 AccountingStorageType=accounting_storage/slurmdbd
 AccountingStorageHost=head
+AccountingStorageEnforce=associations
 JobCompType=jobcomp/none
 # cgroup 기반 잡별 자원 사용량 수집 — cgroup_exporter(slurm-job-exporter)가 이 데이터를 읽는다
 JobAcctGatherType=jobacct_gather/cgroup
 
+# fair-share 우선순위 — 짧은 반감기로 랩 테스트에서 빠르게 반영되게 함
+PriorityType=priority/multifactor
+PriorityDecayHalfLife=00:01:00
+PriorityCalcPeriod=00:00:30
+PriorityWeightFairshare=100000
+PriorityWeightAge=0
+PriorityWeightJobSize=0
+PriorityWeightPartition=0
+PriorityWeightQOS=0
+
 SlurmctldLogFile=/var/log/slurm/slurmctld.log
 SlurmdLogFile=/var/log/slurm/slurmd.log
 
-# 노드 정의 — Phase 0 실측치(slurmd -C)에서 OS 여유분을 뺀 값
+# 노드 정의 — 실측치(slurmd -C)에서 OS 여유분을 뺀 값. node1/node2는
+# Phase 5에서 메모리 증설 후 재측정(defaults/main.yml 참고).
 NodeName=node1 CPUs={{ slurm_common_worker_cpus }} RealMemory={{ slurm_common_worker_real_memory }} State=UNKNOWN
 NodeName=node2 CPUs={{ slurm_common_worker_cpus }} RealMemory={{ slurm_common_worker_real_memory }} State=UNKNOWN
 

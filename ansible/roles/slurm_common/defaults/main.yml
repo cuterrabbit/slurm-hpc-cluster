@@ -2,5 +2,6 @@
 slurm_common_cluster_name: slurmhpc
 slurm_common_partition_name: debug
 slurm_common_worker_cpus: 3
-# Phase 0 실측(slurmd -C): node1/node2 RealMemory=3398MB. OS 여유분을 남기고 3000MB로 고정.
-slurm_common_worker_real_memory: 3000
+# Phase 5에서 node1/node2 메모리 증설(4GB→6.5GB 할당) 후 재측정(slurm -C):
+# RealMemory=5912MB. OS 여유분을 남기고 5500MB로 고정.
+slurm_common_worker_real_memory: 5500

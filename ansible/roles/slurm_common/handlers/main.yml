@@ -1,0 +1,12 @@
+---
+- name: Restart slurmctld
+  ansible.builtin.systemd_service:
+    name: slurmctld
+    state: restarted
+  when: "'headnode' in group_names"
+
+- name: Restart slurmd
+  ansible.builtin.systemd_service:
+    name: slurmd
+    state: restarted
+  when: "'workers' in group_names"
