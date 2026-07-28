@@ -29,8 +29,9 @@
     - slurm_d
     - cgroup_exporter
 
-# NFS(/apps)가 head/worker 양쪽 다 준비된 뒤에 실행. 
-# apptainer 롤이 /apps/containers를 만드는데, NFS 마운트보다 먼저 돌면 워커에서 로컬 디스크에 만들어져 헤드와 다른 디렉터리가 됨.
+# NFS(/apps)가 head/worker 양쪽 다 준비된 뒤에 실행되어야 함 — apptainer 롤이
+# /apps/containers를 만드는데, NFS 마운트보다 먼저 돌면 워커에서 로컬
+# 디스크에 만들어져 헤드와 다른 디렉터리가 됨.
 - name: Configure execution environment (all nodes)
   hosts: cluster
   become: true
