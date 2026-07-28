@@ -1,0 +1,9 @@
+# GRU/Optuna 튜닝 경로만 씀 — 원본(ai-prediction-model)의 matplotlib/scikit-learn/
+# prophet/statsmodels는 이 워크로드에서 안 쓰여서 제외(ADR-0012).
+# CPU 전용 클러스터라 torch는 CPU 휠로 설치(배포 시 --index-url로 지정).
+numpy>=2.1,<2.3
+pandas>=2.2,<2.3
+torch>=2.6,<3.0
+optuna>=4.0,<5.0
+# MySQL storage 백엔드용 드라이버 — MariaDB(ADR-0011)를 Optuna storage로 쓸 때 필요
+pymysql>=1.1,<2.0
