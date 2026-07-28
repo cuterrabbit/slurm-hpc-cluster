@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://head:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: slurm
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: slurm
+          host: "{{ inventory_hostname }}"
+          __path__: /var/log/slurm/*.log
+
+  - job_name: munge
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: munge
+          host: "{{ inventory_hostname }}"
+          __path__: /var/log/munge/*.log

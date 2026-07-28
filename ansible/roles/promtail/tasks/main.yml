@@ -1,0 +1,64 @@
+---
+- name: Ensure promtail is installed
+  ansible.builtin.apt:
+    name: promtail
+    state: present
+    update_cache: true
+
+- name: Ensure acl tools are installed
+  ansible.builtin.apt:
+    name: acl
+    state: present
+
+- name: Ensure promtail data directory exists
+  ansible.builtin.file:
+    path: /var/lib/promtail
+    state: directory
+    owner: promtail
+    group: nogroup
+    mode: '0750'
+
+# slurmctld.log/slurmd.log/slurmdbd.log는 slurm 데몬이 0600으로 생성해서
+# promtail 사용자(자체 계정, root 아님)가 기본적으로는 못 읽는다. munge 쪽은
+# 로그 파일뿐 아니라 /var/log/munge 디렉터리 자체가 0700이라 진입조차 안 된다.
+# 두 서비스 다 소스 코드/설정으로 로그 파일 권한을 바꿔주는 옵션이 없어서,
+# ACL로 promtail 사용자에게만 읽기 권한을 얹는다. 로그 로테이션으로 파일이
+# 새로 생겨도 유지되도록 default ACL도 같이 건다.
+- name: Grant promtail read access to existing files under log directories
+  ansible.posix.acl:
+    path: "{{ item }}"
+    entity: promtail
+    etype: user
+    permissions: rX
+    state: present
+    recursive: true
+  loop:
+    - /var/log/slurm
+    - /var/log/munge
+
+- name: Grant promtail default read access for future log files
+  ansible.posix.acl:
+    path: "{{ item }}"
+    entity: promtail
+    etype: user
+    permissions: rX
+    state: present
+    default: true
+  loop:
+    - /var/log/slurm
+    - /var/log/munge
+
+- name: Deploy promtail config.yml
+  ansible.builtin.template:
+    src: promtail_config.yml.j2
+    dest: /etc/promtail/config.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart promtail
+
+- name: Ensure promtail is enabled and running
+  ansible.builtin.systemd_service:
+    name: promtail
+    enabled: true
+    state: started
