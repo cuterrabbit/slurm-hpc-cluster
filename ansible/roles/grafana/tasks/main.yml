@@ -34,6 +34,40 @@
     mode: '0644'
   notify: Restart grafana
 
+- name: Ensure Grafana dashboards provisioning directory exists
+  ansible.builtin.file:
+    path: /etc/grafana/provisioning/dashboards
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Provision dashboards provider config
+  ansible.builtin.template:
+    src: dashboards_provider.yml.j2
+    dest: /etc/grafana/provisioning/dashboards/dashboards.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart grafana
+
+- name: Ensure dashboards directory exists
+  ansible.builtin.file:
+    path: /var/lib/grafana/dashboards
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: '0755'
+
+- name: Deploy Slurm overview dashboard
+  ansible.builtin.copy:
+    src: slurm_overview.json
+    dest: /var/lib/grafana/dashboards/slurm_overview.json
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  notify: Restart grafana
+
 - name: Ensure grafana-server is enabled and running
   ansible.builtin.systemd_service:
     name: grafana-server
