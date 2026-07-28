@@ -29,6 +29,7 @@
     iptables -t nat -A POSTROUTING -s {{ network_gateway_internal_subnet }}
     -o {{ network_gateway_external_iface }} -j MASQUERADE
   when: "'headnode' in group_names and network_gateway_masquerade_check.rc != 0"
+  changed_when: true
   notify: Save iptables rules
 
 # workers: 기본 경로를 head 경유로 전환. NAT 어댑터 자체는 아직 유지(dhcp4-overrides로 라우팅에서만 제외) —
