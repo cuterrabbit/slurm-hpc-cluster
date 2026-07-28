@@ -18,10 +18,8 @@
     - nfs_server
     - slurm_ctld
     - prometheus_slurm_exporter
-    - prometheus
-    - alertmanager
-    - loki
-    - grafana
+    - docker
+    - observability_stack
 
 - name: Configure worker nodes
   hosts: workers

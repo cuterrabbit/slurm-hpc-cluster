@@ -1,0 +1,5 @@
+---
+observability_stack_prometheus_image: prom/prometheus:v3.0.1
+observability_stack_alertmanager_image: prom/alertmanager:v0.27.0
+observability_stack_loki_image: grafana/loki:3.7.2
+observability_stack_grafana_image: grafana/grafana:13.1.1

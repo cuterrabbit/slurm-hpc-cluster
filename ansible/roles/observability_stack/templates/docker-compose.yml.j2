@@ -1,0 +1,44 @@
+# {{ ansible_managed }}
+services:
+  prometheus:
+    image: {{ observability_stack_prometheus_image }}
+    container_name: prometheus
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /opt/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /opt/observability/prometheus/rules.d:/etc/prometheus/rules.d:ro
+      - /opt/observability/data/prometheus:/prometheus
+
+  alertmanager:
+    image: {{ observability_stack_alertmanager_image }}
+    container_name: alertmanager
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /opt/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - /opt/observability/data/alertmanager:/alertmanager
+
+  loki:
+    image: {{ observability_stack_loki_image }}
+    container_name: loki
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /opt/observability/loki/config.yml:/etc/loki/local-config.yaml:ro
+      - /opt/observability/data/loki:/var/lib/loki
+
+  grafana:
+    image: {{ observability_stack_grafana_image }}
+    container_name: grafana
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD={{ grafana_admin_password }}
+    volumes:
+      - /opt/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - /opt/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - /opt/observability/data/grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki

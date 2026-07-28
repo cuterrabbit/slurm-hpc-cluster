@@ -1,0 +1,109 @@
+---
+- name: Ensure observability_stack config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /opt/observability
+    - /opt/observability/prometheus
+    - /opt/observability/prometheus/rules.d
+    - /opt/observability/alertmanager
+    - /opt/observability/loki
+    - /opt/observability/grafana/provisioning/datasources
+    - /opt/observability/grafana/provisioning/dashboards
+    - /opt/observability/grafana/dashboards
+
+- name: Ensure observability_stack data directories exist (container-writable)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+  loop:
+    - /opt/observability/data/prometheus
+    - /opt/observability/data/alertmanager
+    - /opt/observability/data/loki
+    - /opt/observability/data/grafana
+
+- name: Deploy prometheus.yml
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /opt/observability/prometheus/prometheus.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy alert rules
+  ansible.builtin.template:
+    src: alert_rules.yml.j2
+    dest: /opt/observability/prometheus/rules.d/alert_rules.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy alertmanager.yml
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: /opt/observability/alertmanager/alertmanager.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy loki config.yml
+  ansible.builtin.template:
+    src: loki_config.yml.j2
+    dest: /opt/observability/loki/config.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Provision Prometheus datasource
+  ansible.builtin.template:
+    src: prometheus_datasource.yml.j2
+    dest: /opt/observability/grafana/provisioning/datasources/prometheus.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Provision Loki datasource
+  ansible.builtin.template:
+    src: loki_datasource.yml.j2
+    dest: /opt/observability/grafana/provisioning/datasources/loki.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Provision dashboards provider config
+  ansible.builtin.template:
+    src: dashboards_provider.yml.j2
+    dest: /opt/observability/grafana/provisioning/dashboards/dashboards.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy Slurm overview dashboard
+  ansible.builtin.copy:
+    src: slurm_overview.json
+    dest: /opt/observability/grafana/dashboards/slurm_overview.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/observability/docker-compose.yml
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Ensure observability stack containers are up
+  community.docker.docker_compose_v2:
+    project_src: /opt/observability
+    state: present
+    pull: missing
