@@ -6,6 +6,8 @@ network:
       dhcp6: true
       dhcp4-overrides:
         use-routes: false
+      dhcp6-overrides:
+        use-routes: false
       match:
         macaddress: {{ ansible_facts['enp0s3']['macaddress'] }}
       set-name: enp0s3
