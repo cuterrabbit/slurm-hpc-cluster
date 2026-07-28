@@ -32,6 +32,42 @@
   changed_when: true
   notify: Save iptables rules
 
+# Docker가 FORWARD 체인 기본 정책을 DROP으로 깔아둬서(자체 브릿지 트래픽만 명시 허용),
+# 클러스터 서브넷 포워딩 트래픽은 명시적으로 허용해줘야 한다.
+- name: Check if FORWARD accept rule for outbound cluster traffic already exists
+  ansible.builtin.command: >
+    iptables -C FORWARD -s {{ network_gateway_internal_subnet }}
+    -o {{ network_gateway_external_iface }} -j ACCEPT
+  register: network_gateway_forward_out_check
+  failed_when: false
+  changed_when: false
+  when: "'headnode' in group_names"
+
+- name: Allow forwarding outbound cluster subnet traffic
+  ansible.builtin.command: >
+    iptables -A FORWARD -s {{ network_gateway_internal_subnet }}
+    -o {{ network_gateway_external_iface }} -j ACCEPT
+  when: "'headnode' in group_names and network_gateway_forward_out_check.rc != 0"
+  changed_when: true
+  notify: Save iptables rules
+
+- name: Check if FORWARD accept rule for return cluster traffic already exists
+  ansible.builtin.command: >
+    iptables -C FORWARD -d {{ network_gateway_internal_subnet }}
+    -m state --state ESTABLISHED,RELATED -j ACCEPT
+  register: network_gateway_forward_in_check
+  failed_when: false
+  changed_when: false
+  when: "'headnode' in group_names"
+
+- name: Allow forwarding return traffic to cluster subnet
+  ansible.builtin.command: >
+    iptables -A FORWARD -d {{ network_gateway_internal_subnet }}
+    -m state --state ESTABLISHED,RELATED -j ACCEPT
+  when: "'headnode' in group_names and network_gateway_forward_in_check.rc != 0"
+  changed_when: true
+  notify: Save iptables rules
+
 # workers: 기본 경로를 head 경유로 전환. NAT 어댑터 자체는 아직 유지(dhcp4-overrides로 라우팅에서만 제외) —
 # 검증 후 별도로 VirtualBox에서 어댑터를 제거하는 단계로 넘어감.
 # 같은 인터페이스를 여러 netplan 파일에 나눠 정의하면 병합 순서에 따라 예상 못한 결과가 날 수 있어서,
