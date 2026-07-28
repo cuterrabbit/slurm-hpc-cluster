@@ -1,0 +1,12 @@
+Bootstrap: docker
+From: python:3.13-slim
+
+%post
+    pip install --no-cache-dir "torch>=2.6,<3.0" --index-url https://download.pytorch.org/whl/cpu
+    pip install --no-cache-dir "numpy>=2.1,<2.3" "pandas>=2.2,<2.3" "optuna>=4.0,<5.0" "pymysql>=1.1,<2.0"
+
+%environment
+    export PYTHONUNBUFFERED=1
+
+%labels
+    Purpose "Phase 5 부하 생성기 실행 환경 (ADR-0012) - 코드는 이미지에 안 넣고 런타임에 바인드 마운트"
