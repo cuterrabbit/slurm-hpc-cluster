@@ -1,0 +1,50 @@
+---
+- name: Ensure mariadb_stack config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /opt/mariadb
+    - /opt/mariadb/initdb
+
+# 공식 mariadb 이미지 내부 mysql 유저 UID가 호스트와 안 맞을 수 있어서,
+# observability_stack과 동일하게 데이터 디렉터리만 0777로 단순화한다
+# (관리자만 접근 가능한 호스트라는 전제 위의 트레이드오프, ADR-0009 연장).
+- name: Ensure mariadb data directory exists (container-writable)
+  ansible.builtin.file:
+    path: /opt/mariadb/data
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+
+# 컨테이너 내부 mysql 유저(UID는 이미지마다 다름)가 읽어야 해서 0644 —
+# 이 파일에 있는 비밀번호는 호스트 로컬 파일 접근만 막으면 되는데, 어차피
+# 이 호스트는 관리자만 접근 가능(observability_stack의 0777 데이터 디렉터리와
+# 같은 트레이드오프, ADR-0009 연장).
+- name: Deploy database/user bootstrap SQL
+  ansible.builtin.template:
+    src: init-db.sql.j2
+    dest: /opt/mariadb/initdb/01-init.sql
+    owner: root
+    group: root
+    mode: '0644'
+  no_log: true
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/mariadb/docker-compose.yml
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Ensure mariadb container is up
+  community.docker.docker_compose_v2:
+    project_src: /opt/mariadb
+    state: present
+    pull: missing

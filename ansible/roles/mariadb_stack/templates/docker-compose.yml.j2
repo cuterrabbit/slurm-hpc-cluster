@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+services:
+  mariadb:
+    image: {{ mariadb_stack_image }}
+    container_name: mariadb
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - MARIADB_ROOT_PASSWORD={{ mariadb_root_password }}
+    volumes:
+      - /opt/mariadb/data:/var/lib/mysql
+      - /opt/mariadb/initdb:/docker-entrypoint-initdb.d:ro

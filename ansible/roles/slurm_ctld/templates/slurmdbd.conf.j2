@@ -4,7 +4,10 @@ DbdHost=head
 DbdPort=6819
 SlurmUser=slurm
 StorageType=accounting_storage/mysql
-StorageHost=localhost
+# 127.0.0.1(TCP)로 명시 — "localhost"를 주면 MySQL 클라이언트 라이브러리가
+# 유닉스 소켓 연결을 우선 시도하는데, MariaDB가 Docker Compose로 옮겨간
+# 뒤로는 그 소켓 파일이 호스트에 없다(ADR-0011).
+StorageHost=127.0.0.1
 StorageUser=slurm
 StoragePass={{ slurmdbd_db_password }}
 StorageLoc=slurm_acct_db

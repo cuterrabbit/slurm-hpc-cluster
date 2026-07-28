@@ -14,11 +14,11 @@
   hosts: headnode
   become: true
   roles:
-    - mariadb
+    - docker
+    - mariadb_stack
     - nfs_server
     - slurm_ctld
     - prometheus_slurm_exporter
-    - docker
     - observability_stack
 
 - name: Configure worker nodes
