@@ -1,0 +1,46 @@
+---
+# IP forwarding + NAT masquerade — node1/node2가 head를 거쳐 외부망에 나갈 수 있게 함
+- name: Enable IP forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+
+- name: Install iptables-persistent for NAT rule persistence
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+
+- name: Ensure NAT masquerade rule for cluster subnet
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    source: "{{ network_gateway_internal_subnet }}"
+    out_interface: "{{ network_gateway_external_iface }}"
+    jump: MASQUERADE
+    state: present
+  notify: Save iptables rules
+
+# Docker가 FORWARD 체인 기본 정책을 DROP으로 깔아둬서(자체 브릿지 트래픽만 명시 허용),
+# 클러스터 서브넷 포워딩 트래픽은 명시적으로 허용해줘야 한다.
+- name: Allow forwarding outbound cluster subnet traffic
+  ansible.builtin.iptables:
+    chain: FORWARD
+    source: "{{ network_gateway_internal_subnet }}"
+    out_interface: "{{ network_gateway_external_iface }}"
+    jump: ACCEPT
+    state: present
+  notify: Save iptables rules
+
+- name: Allow forwarding return traffic to cluster subnet
+  ansible.builtin.iptables:
+    chain: FORWARD
+    destination: "{{ network_gateway_internal_subnet }}"
+    ctstate:
+      - ESTABLISHED
+      - RELATED
+    jump: ACCEPT
+    state: present
+  notify: Save iptables rules

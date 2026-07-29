@@ -1,0 +1,10 @@
+---
+# 기본 경로를 head 경유로 전환
+- name: Deploy netplan config routing default traffic via head
+  ansible.builtin.template:
+    src: 00-installer-config.yaml.j2
+    dest: /etc/netplan/00-installer-config.yaml
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Apply netplan
