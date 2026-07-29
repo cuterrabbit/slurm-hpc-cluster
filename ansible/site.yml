@@ -38,3 +38,12 @@
   become: true
   roles:
     - apptainer
+
+# 헤드에서만 실행 — /apps는 헤드의 실제 로컬 스토리지(NFS export 원본)라
+# 여기 배포한 코드/이미지가 워커에는 마운트를 통해 그대로 보인다.
+# apptainer(빌드 도구)와 NFS(/apps) 둘 다 준비된 뒤에 실행돼야 한다.
+- name: Deploy workloads onto shared storage
+  hosts: headnode
+  become: true
+  roles:
+    - workload_deploy

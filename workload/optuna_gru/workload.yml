@@ -1,0 +1,5 @@
+---
+# workload_deploy 롤이 이 파일의 존재 여부로 배포 대상을 판단한다.
+# 이 파일이 없는 workload/<name>/ 디렉터리는 자동 배포에서 제외된다.
+name: optuna_gru
+def_file: optuna_gru.def

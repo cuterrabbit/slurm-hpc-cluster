@@ -1,0 +1,4 @@
+---
+workload_deploy_source_dir: "{{ playbook_dir }}/../workload"
+workload_deploy_dest_root: /apps/workload
+workload_deploy_containers_dir: /apps/containers

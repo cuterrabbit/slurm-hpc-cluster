@@ -1,0 +1,68 @@
+---
+# workload/<name>/workload.yml이 있는 디렉터리만 배포 대상이다 — 매니페스트가
+# 없는 디렉터리는 작업 중이어도 안전하게 무시된다 (자동 탐지 + 완성 신호 분리).
+- name: Discover workload manifests
+  ansible.builtin.find:
+    paths: "{{ workload_deploy_source_dir }}"
+    patterns: workload.yml
+    recurse: true
+  register: workload_deploy_manifest_files
+
+- name: Load workload manifests
+  ansible.builtin.set_fact:
+    workload_deploy_items: >-
+      {{ workload_deploy_items | default([]) +
+      [(lookup('ansible.builtin.file', item.path) | from_yaml) |
+      combine({'_dir': item.path | dirname})] }}
+  loop: "{{ workload_deploy_manifest_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Ensure workload destination directories exist
+  ansible.builtin.file:
+    path: "{{ workload_deploy_dest_root }}/{{ item.name }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ workload_deploy_items }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# data/ 는 학습 산출물·study DB 등 워크로드가 런타임에 쓰는 하위 경로다.
+# 최상위(0755, root 소유)에는 일반 유저가 못 쓰므로 별도로 쓰기 가능하게 열어둔다.
+# 이미 있으면 file 모듈이 손대지 않으므로 재실행해도 기존 데이터가 지워지지 않는다.
+- name: Ensure workload writable data directory exists
+  ansible.builtin.file:
+    path: "{{ workload_deploy_dest_root }}/{{ item.name }}/data"
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+  loop: "{{ workload_deploy_items }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# delete: false — data/ 안의 런타임 산출물(잡 로그, study DB)이 소스 트리에는
+# 없으므로, delete를 켜면 재배포마다 그걸 지워버리게 된다.
+- name: Sync workload code to shared storage
+  ansible.posix.synchronize:
+    src: "{{ item._dir }}/"
+    dest: "{{ workload_deploy_dest_root }}/{{ item.name }}/"
+    recursive: true
+    delete: false
+    rsync_opts:
+      - "--exclude=__pycache__"
+      - "--exclude=*.pyc"
+      - "--exclude=workload.yml"
+  loop: "{{ workload_deploy_items }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Build container images where a definition file is declared
+  ansible.builtin.include_tasks: build_image.yml
+  loop: "{{ workload_deploy_items }}"
+  loop_control:
+    loop_var: workload
+    label: "{{ workload.name }}"
+  when: workload.def_file is defined
