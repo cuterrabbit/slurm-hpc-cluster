@@ -1,6 +1,4 @@
 # {{ ansible_managed }}
-# no_root_squash: 클러스터 노드는 전부 같은 신뢰 경계 안에 있고, Ansible이
-# root로 /home/hpcuser 안의 파일을 관리해야 한다. 기본값(root_squash)이면
-# 워커의 root가 서버에서 익명 사용자로 강등되어 권한 오류가 난다(TS-006).
-/home {{ nfs_server_client_subnet }}(rw,sync,no_subtree_check,no_root_squash)
+# 보안 및 관리를 위해 no_root_squash 유지.
+/home {{ nfs_server_client_subnet }}(rw,sync,no_subtree_check)
 /apps {{ nfs_server_client_subnet }}(rw,sync,no_subtree_check,no_root_squash)
