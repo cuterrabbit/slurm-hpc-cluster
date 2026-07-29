@@ -1,9 +1,15 @@
 Bootstrap: docker
 From: python:3.13-slim
 
+%files
+    requirements.txt /opt/requirements.txt
+
 %post
-    pip install --no-cache-dir "torch>=2.6,<3.0" --index-url https://download.pytorch.org/whl/cpu
-    pip install --no-cache-dir "numpy>=2.1,<2.3" "pandas>=2.2,<2.3" "optuna>=4.0,<5.0" "pymysql>=1.1,<2.0"
+    grep '^torch' /opt/requirements.txt > /opt/torch-requirement.txt
+    grep -v '^torch' /opt/requirements.txt > /opt/other-requirements.txt
+    pip install --no-cache-dir -r /opt/torch-requirement.txt --index-url https://download.pytorch.org/whl/cpu
+    pip install --no-cache-dir -r /opt/other-requirements.txt
+    rm -f /opt/requirements.txt /opt/torch-requirement.txt /opt/other-requirements.txt
 
 %environment
     export PYTHONUNBUFFERED=1

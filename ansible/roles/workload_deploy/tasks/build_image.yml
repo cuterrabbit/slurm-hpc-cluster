@@ -1,7 +1,4 @@
 ---
-# .def 파일 내용 해시로 재빌드 필요 여부를 판단한다 — 코드(src/)는 이미지에
-# 안 들어가고 런타임에 bind mount되므로(ADR-0012), 이미지 재빌드가 필요한
-# 경우는 .def 자체가 바뀔 때뿐이다.
 - name: Compute current .def file hash for {{ workload.name }}
   ansible.builtin.set_fact:
     workload_deploy_def_hash: >-
@@ -19,12 +16,12 @@
     workload_deploy_existing_hash.content is not defined or
     (workload_deploy_existing_hash.content | b64decode) != workload_deploy_def_hash
   block:
-    # /apps/containers는 root 소유(0755)라 빌드 결과물을 직접 못 쓴다(ADR-0012).
-    # 로컬 임시 경로에 언프리빌리지드(fakeroot)로 먼저 빌드하고 나중에 옮긴다.
     - name: Build image in temporary location (unprivileged, fakeroot)
       ansible.builtin.command: >
         apptainer build --fakeroot --force /tmp/{{ workload.name }}.sif
-        {{ workload_deploy_dest_root }}/{{ workload.name }}/{{ workload.def_file }}
+        {{ workload.def_file }}
+      args:
+        chdir: "{{ workload_deploy_dest_root }}/{{ workload.name }}"
       changed_when: true
       become: false
 
