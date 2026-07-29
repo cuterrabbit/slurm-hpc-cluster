@@ -1,19 +1,13 @@
 # {{ ansible_managed }}
+# NAT 어댑터(enp0s3)는 VirtualBox에서 제거됨 — head를 게이트웨이로 쓰는 구조라 더 이상 필요 없음.
+# DHCP가 주던 DNS 서버 정보도 같이 사라져서, nameservers를 명시적으로 지정해야 한다.
 network:
   ethernets:
-    enp0s3:
-      dhcp4: true
-      dhcp6: true
-      dhcp4-overrides:
-        use-routes: false
-      dhcp6-overrides:
-        use-routes: false
-      match:
-        macaddress: {{ ansible_facts['enp0s3']['macaddress'] }}
-      set-name: enp0s3
     enp0s8:
       addresses: [{{ ansible_facts['enp0s8']['ipv4']['address'] }}/24]
       routes:
         - to: default
           via: {{ network_gateway_head_ip }}
+      nameservers:
+        addresses: {{ network_gateway_dns_servers }}
   version: 2
