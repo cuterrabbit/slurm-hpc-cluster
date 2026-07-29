@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+{% if 'headnode' in group_names %}
+# 외부 NTP pool 사용 — head가 클러스터의 시각 기준이 된다.
+pool 0.ubuntu.pool.ntp.org iburst
+pool 1.ubuntu.pool.ntp.org iburst
+pool 2.ubuntu.pool.ntp.org iburst
+pool 3.ubuntu.pool.ntp.org iburst
+
+# 워커(cluster_subnet)가 head를 NTP 서버로 쓸 수 있게 허용
+allow {{ cluster_subnet }}
+{% else %}
+# head를 유일한 시각 기준으로 쓴다 
+server head iburst prefer
+{% endif %}
+
+keyfile /etc/chrony/chrony.keys
+driftfile /var/lib/chrony/chrony.drift
+logdir /var/log/chrony
+maxupdateskew 100.0
+rtcsync
+
+
+makestep 1 -1

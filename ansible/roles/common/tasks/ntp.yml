@@ -5,6 +5,15 @@
     state: present
     update_cache: true
 
+- name: Deploy chrony configuration
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart chrony
+
 - name: Ensure chrony is enabled and running
   ansible.builtin.systemd_service:
     name: chrony

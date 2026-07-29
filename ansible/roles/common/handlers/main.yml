@@ -3,3 +3,8 @@
   ansible.builtin.systemd_service:
     name: ssh
     state: restarted
+
+- name: Restart chrony
+  ansible.builtin.systemd_service:
+    name: chrony
+    state: restarted
