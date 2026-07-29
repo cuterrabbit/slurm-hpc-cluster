@@ -5,6 +5,12 @@ services:
     container_name: prometheus
     network_mode: host
     restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # 설정/룰 파일이 바뀔 때마다 컨테이너를 재생성하지 않고 API로
+      # 리로드하기 위함(observability_stack handlers 참고).
+      - --web.enable-lifecycle
     volumes:
       - /opt/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - /opt/observability/prometheus/rules.d:/etc/prometheus/rules.d:ro

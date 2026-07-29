@@ -36,6 +36,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Reload Prometheus
 
 - name: Deploy alert rules
   ansible.builtin.template:
@@ -44,6 +45,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Reload Prometheus
 
 - name: Deploy alertmanager.yml
   ansible.builtin.template:
