@@ -1,0 +1,77 @@
+---
+# 배포 후 클러스터가 실제로 건강한지 확인한다. site.yml이 에러 없이 끝나는 것과
+# 클러스터가 잡을 받을 수 있는 상태인 것은 별개다 — 이 플레이북은 후자를 본다.
+
+- name: Verify shared storage is mounted on worker nodes
+  hosts: workers
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Check /apps is NFS-mounted
+      ansible.builtin.command: findmnt -n -o FSTYPE /apps
+      register: verify_apps_fstype
+      changed_when: false
+      failed_when: verify_apps_fstype.stdout != 'nfs4'
+
+    - name: Check hpcuser home is NFS-mounted
+      ansible.builtin.command: findmnt -n -o FSTYPE /home/hpcuser
+      register: verify_home_fstype
+      changed_when: false
+      failed_when: verify_home_fstype.stdout != 'nfs4'
+
+- name: Verify scheduler, monitoring, and database health
+  hosts: headnode
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Query node states via sinfo
+      ansible.builtin.command: sinfo -h -N -o '%T'
+      register: verify_sinfo
+      changed_when: false
+      failed_when: >-
+        verify_sinfo.stdout_lines | reject('equalto', 'idle') | list | length > 0
+
+    - name: Submit a 2-node smoke test job
+      ansible.builtin.command: >-
+        srun --nodes=2 --ntasks-per-node=1 --mem=200M --time=00:01:00 hostname
+      register: verify_srun
+      changed_when: false
+      failed_when: >-
+        verify_srun.rc != 0 or
+        (verify_srun.stdout_lines | unique | length) != 2
+
+    - name: Check Prometheus targets are all up
+      ansible.builtin.uri:
+        url: http://localhost:9090/api/v1/targets
+      register: verify_prometheus
+
+    - name: Fail if any Prometheus target is down
+      ansible.builtin.fail:
+        msg: >-
+          down 상태 타겟: {{ verify_prometheus.json.data.activeTargets
+          | rejectattr('health', 'equalto', 'up')
+          | map(attribute='scrapeUrl') | list }}
+      when: >-
+        verify_prometheus.json.data.activeTargets
+        | rejectattr('health', 'equalto', 'up') | list | length > 0
+
+    - name: Check Grafana health endpoint
+      ansible.builtin.uri:
+        url: http://localhost:3000/api/health
+      register: verify_grafana
+      failed_when: verify_grafana.json.database != 'ok'
+
+    - name: Read MariaDB root password from deployed compose file
+      ansible.builtin.command: grep MARIADB_ROOT_PASSWORD /opt/mariadb/docker-compose.yml
+      register: verify_mariadb_pw_line
+      changed_when: false
+      no_log: true
+
+    # 비밀번호를 명령줄 인자에 직접 넣지 않고 -e MYSQL_PWD(값 없이)로 컨테이너에
+    # 현재 프로세스 환경변수를 그대로 전달한다 — ps 목록/로그에 값이 노출되지 않는다.
+    - name: Check MariaDB accepts connections
+      ansible.builtin.command: docker exec -e MYSQL_PWD mariadb mariadb -u root -e "SELECT 1"
+      environment:
+        MYSQL_PWD: "{{ verify_mariadb_pw_line.stdout.split('=')[1] }}"
+      changed_when: false
+      no_log: true

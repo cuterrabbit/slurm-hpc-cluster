@@ -86,3 +86,16 @@ jobs:
       - name: Clean up vault password file
         if: always()
         run: rm -f "$VAULT_PASS_FILE"
+
+  smoke:
+    needs: deploy
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, slurm-head]
+    defaults:
+      run:
+        working-directory: ansible
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run post-deploy smoke tests
+        run: ansible-playbook verify.yml
