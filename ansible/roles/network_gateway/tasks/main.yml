@@ -28,7 +28,9 @@
   ansible.builtin.command: >
     iptables -t nat -A POSTROUTING -s {{ network_gateway_internal_subnet }}
     -o {{ network_gateway_external_iface }} -j MASQUERADE
-  when: "'headnode' in group_names and network_gateway_masquerade_check.rc != 0"
+  when:
+    - "'headnode' in group_names"
+    - "network_gateway_masquerade_check.rc != 0"
   changed_when: true
   notify: Save iptables rules
 
@@ -47,7 +49,9 @@
   ansible.builtin.command: >
     iptables -A FORWARD -s {{ network_gateway_internal_subnet }}
     -o {{ network_gateway_external_iface }} -j ACCEPT
-  when: "'headnode' in group_names and network_gateway_forward_out_check.rc != 0"
+  when:
+    - "'headnode' in group_names"
+    - "network_gateway_forward_out_check.rc != 0"
   changed_when: true
   notify: Save iptables rules
 
@@ -64,7 +68,9 @@
   ansible.builtin.command: >
     iptables -A FORWARD -d {{ network_gateway_internal_subnet }}
     -m state --state ESTABLISHED,RELATED -j ACCEPT
-  when: "'headnode' in group_names and network_gateway_forward_in_check.rc != 0"
+  when:
+    - "'headnode' in group_names"
+    - "network_gateway_forward_in_check.rc != 0"
   changed_when: true
   notify: Save iptables rules
 
