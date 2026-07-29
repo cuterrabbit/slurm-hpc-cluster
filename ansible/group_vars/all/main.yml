@@ -9,3 +9,10 @@ common_ssh_password_authentication: false
 
 # 클러스터 내부망 대역
 cluster_subnet: 192.168.56.0/24
+
+# Alertmanager 이메일 알림 — 발신/수신 전부 Google Workspace 계정(smtp.gmail.com)
+alertmanager_smtp_host: smtp.gmail.com
+alertmanager_smtp_port: 587
+alertmanager_smtp_username: ledw8992@pusan.ac.kr
+alertmanager_email_from: ledw8992@pusan.ac.kr
+alertmanager_email_to: ledw8992@pusan.ac.kr

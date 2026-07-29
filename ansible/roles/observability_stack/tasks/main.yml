@@ -36,7 +36,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: Reload Prometheus
+  notify: Restart Prometheus
 
 - name: Deploy alert rules
   ansible.builtin.template:
@@ -45,7 +45,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: Reload Prometheus
+  notify: Restart Prometheus
 
 - name: Deploy alertmanager.yml
   ansible.builtin.template:
@@ -54,6 +54,8 @@
     owner: root
     group: root
     mode: '0644'
+  no_log: true
+  notify: Restart Alertmanager
 
 - name: Deploy loki config.yml
   ansible.builtin.template:

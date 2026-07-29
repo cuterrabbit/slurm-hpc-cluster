@@ -1,13 +1,30 @@
 # {{ ansible_managed }}
-# 실제 알림 채널(이메일/Slack 등)은 후속 진행
-# 여기서는 알림을 쏘는지만 Alertmanager UI/API로 확인한다. receiver는 자리만 채워둠.
-
 route:
-  receiver: default
+  receiver: email
   group_by: ['alertname']
   group_wait: 10s
   group_interval: 5m
-  repeat_interval: 1h
+  repeat_interval: 4h
+  routes:
+    # critical: 자주 재알림
+    - matchers:
+        - severity = critical
+      receiver: email
+      group_wait: 10s
+      repeat_interval: 15m
+    # warning: 덜 자주
+    - matchers:
+        - severity = warning
+      receiver: email
+      group_wait: 5m
+      repeat_interval: 4h
 
 receivers:
-  - name: default
+  - name: email
+    email_configs:
+      - to: "{{ alertmanager_email_to }}"
+        from: "{{ alertmanager_email_from }}"
+        smarthost: "{{ alertmanager_smtp_host }}:{{ alertmanager_smtp_port }}"
+        auth_username: "{{ alertmanager_smtp_username }}"
+        auth_password: "{{ alertmanager_smtp_password }}"
+        require_tls: true

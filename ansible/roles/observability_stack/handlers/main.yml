@@ -1,6 +1,8 @@
 ---
-- name: Reload Prometheus
-  ansible.builtin.uri:
-    url: http://localhost:9090/-/reload
-    method: POST
-    status_code: 200
+- name: Restart Prometheus
+  ansible.builtin.command: docker restart prometheus
+  changed_when: true
+
+- name: Restart Alertmanager
+  ansible.builtin.command: docker restart alertmanager
+  changed_when: true
