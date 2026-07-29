@@ -1,2 +1,2 @@
 ---
-nfs_server_client_subnet: 192.168.56.0/24
+nfs_server_client_subnet: "{{ cluster_subnet }}"

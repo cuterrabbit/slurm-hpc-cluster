@@ -1,8 +1,11 @@
 ---
-# 공개 가능한 공유 변수. 시크릿은 group_vars/all/vault.yml에 별도로
+# 공개 가능한 공유 변수
 
 common_shared_user: hpcuser
 common_shared_uid: 2000
 common_shared_gid: 2000
 
 common_ssh_password_authentication: false
+
+# 클러스터 내부망 대역
+cluster_subnet: 192.168.56.0/24

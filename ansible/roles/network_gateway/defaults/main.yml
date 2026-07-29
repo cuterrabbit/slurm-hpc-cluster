@@ -1,5 +1,5 @@
 ---
-network_gateway_internal_subnet: 192.168.56.0/24
+network_gateway_internal_subnet: "{{ cluster_subnet }}"
 network_gateway_external_iface: enp0s3
 network_gateway_head_ip: 192.168.56.10
 network_gateway_dns_servers:
