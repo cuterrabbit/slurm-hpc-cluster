@@ -5,7 +5,12 @@ name: CI/CD
   pull_request:
   push:
     branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "쉼표로 구분된 site.yml 태그 (비우면 전체 실행)"
+        required: false
+        default: ""
 
 jobs:
   lint:
@@ -81,7 +86,12 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
 
       - name: Run site.yml
-        run: ansible-playbook site.yml --vault-password-file "$VAULT_PASS_FILE"
+        run: |
+          TAGS_ARG=""
+          if [ -n "${{ github.event.inputs.tags }}" ]; then
+            TAGS_ARG="--tags ${{ github.event.inputs.tags }}"
+          fi
+          ansible-playbook site.yml --vault-password-file "$VAULT_PASS_FILE" $TAGS_ARG
 
       - name: Clean up vault password file
         if: always()

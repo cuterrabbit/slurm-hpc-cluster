@@ -3,42 +3,61 @@
   hosts: cluster
   become: true
   roles:
-    - common
-    - munge
-    - slurm_common
-    - node_exporter
-    - grafana_repo
-    - promtail
-    - network_gateway
+    - role: common
+      tags: [common]
+    - role: munge
+      tags: [munge]
+    - role: slurm_common
+      tags: [slurm_common]
+    - role: node_exporter
+      tags: [node_exporter]
+    - role: grafana_repo
+      tags: [grafana_repo]
+    - role: promtail
+      tags: [promtail]
+    - role: network_gateway
+      tags: [network_gateway]
 
 - name: Configure head node services
   hosts: headnode
   become: true
   roles:
-    - docker
-    - mariadb_stack
-    - mariadb_backup
-    - nfs_server
-    - slurm_ctld
-    - prometheus_slurm_exporter
-    - observability_stack
+    - role: docker
+      tags: [docker]
+    - role: mariadb_stack
+      tags: [mariadb_stack]
+    - role: mariadb_backup
+      tags: [mariadb_backup]
+    - role: nfs_server
+      tags: [nfs_server]
+    - role: slurm_ctld
+      tags: [slurm_ctld]
+    - role: prometheus_slurm_exporter
+      tags: [prometheus_slurm_exporter]
+    - role: observability_stack
+      tags: [observability_stack]
 
 - name: Configure worker nodes
   hosts: workers
   become: true
   roles:
-    - nfs_client
-    - slurm_d
-    - cgroup_exporter
+    - role: nfs_client
+      tags: [nfs_client]
+    - role: slurm_d
+      tags: [slurm_d]
+    - role: cgroup_exporter
+      tags: [cgroup_exporter]
 
 - name: Configure execution environment (all nodes)
   hosts: cluster
   become: true
   roles:
-    - apptainer
+    - role: apptainer
+      tags: [apptainer]
 
 - name: Deploy workloads onto shared storage
   hosts: headnode
   become: true
   roles:
-    - workload_deploy
+    - role: workload_deploy
+      tags: [workload_deploy]
