@@ -1,6 +1,5 @@
 ---
-# 배포 후 클러스터가 실제로 건강한지 확인한다. site.yml이 에러 없이 끝나는 것과
-# 클러스터가 잡을 받을 수 있는 상태인 것은 별개다 — 이 플레이북은 후자를 본다.
+# 배포 후 클러스터가 실제로 건강한지 확인
 
 - name: Verify shared storage is mounted on worker nodes
   hosts: workers
