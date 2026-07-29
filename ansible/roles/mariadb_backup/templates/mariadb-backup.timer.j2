@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Daily MariaDB backup timer
+
+[Timer]
+OnCalendar=*-*-* {{ mariadb_backup_schedule }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

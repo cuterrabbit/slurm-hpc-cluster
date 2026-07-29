@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+[Unit]
+Description=MariaDB backup (Slurm accounting + Optuna DB)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart={{ mariadb_backup_script_path }}

@@ -1,0 +1,39 @@
+---
+- name: Ensure backup directory exists
+  ansible.builtin.file:
+    path: "{{ mariadb_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Deploy backup script
+  ansible.builtin.template:
+    src: backup.sh.j2
+    dest: "{{ mariadb_backup_script_path }}"
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Deploy backup systemd service unit
+  ansible.builtin.template:
+    src: mariadb-backup.service.j2
+    dest: /etc/systemd/system/mariadb-backup.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy backup systemd timer unit
+  ansible.builtin.template:
+    src: mariadb-backup.timer.j2
+    dest: /etc/systemd/system/mariadb-backup.timer
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure backup timer is enabled and started
+  ansible.builtin.systemd_service:
+    name: mariadb-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

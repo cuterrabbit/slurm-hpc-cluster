@@ -1,0 +1,6 @@
+---
+mariadb_backup_dir: /opt/mariadb/backups
+mariadb_backup_retention_days: 7
+mariadb_backup_schedule: "03:00:00"
+mariadb_backup_textfile_dir: /var/lib/prometheus/node-exporter
+mariadb_backup_script_path: /opt/mariadb/backup.sh

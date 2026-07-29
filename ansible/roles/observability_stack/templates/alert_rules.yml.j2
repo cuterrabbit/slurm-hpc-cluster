@@ -57,3 +57,16 @@ groups:
           description: >-
             요청한 코어 대비 실사용률이 40% 미만으로 3분 넘게 유지되고
             있습니다.
+
+      - alert: MariaDBBackupStale
+        expr: >-
+          (time() - mariadb_backup_last_success_timestamp_seconds > 86400)
+            or absent(mariadb_backup_last_success_timestamp_seconds)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MariaDB 백업이 24시간 넘게 성공하지 않음"
+          description: >-
+            마지막 성공한 백업이 24시간을 넘었거나 한 번도 성공하지
+            않았습니다. mariadb-backup.timer 상태를 확인하세요.

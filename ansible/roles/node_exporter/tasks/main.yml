@@ -5,6 +5,27 @@
     state: present
     update_cache: true
 
+# textfile collector: 백업 스크립트 같은 배치 작업이 남긴 메트릭 파일을
+# node_exporter가 읽어서 Prometheus로 노출하게 한다. 
+# Ubuntu 패키지에서는 기본적으로 꺼져 있다.
+- name: Ensure textfile collector directory exists
+  ansible.builtin.file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure node exporter textfile collector flag
+  ansible.builtin.copy:
+    content: |
+      ARGS="--collector.textfile.directory={{ node_exporter_textfile_dir }}"
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart node exporter
+
 - name: Ensure node exporter is enabled and running
   ansible.builtin.systemd_service:
     name: prometheus-node-exporter

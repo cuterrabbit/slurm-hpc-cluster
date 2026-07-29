@@ -17,6 +17,7 @@
   roles:
     - docker
     - mariadb_stack
+    - mariadb_backup
     - nfs_server
     - slurm_ctld
     - prometheus_slurm_exporter
@@ -30,18 +31,12 @@
     - slurm_d
     - cgroup_exporter
 
-# NFS(/apps)가 head/worker 양쪽 다 준비된 뒤에 실행되어야 함 — apptainer 롤이
-# /apps/containers를 만드는데, NFS 마운트보다 먼저 돌면 워커에서 로컬
-# 디스크에 만들어져 헤드와 다른 디렉터리가 됨.
 - name: Configure execution environment (all nodes)
   hosts: cluster
   become: true
   roles:
     - apptainer
 
-# 헤드에서만 실행 — /apps는 헤드의 실제 로컬 스토리지(NFS export 원본)라
-# 여기 배포한 코드/이미지가 워커에는 마운트를 통해 그대로 보인다.
-# apptainer(빌드 도구)와 NFS(/apps) 둘 다 준비된 뒤에 실행돼야 한다.
 - name: Deploy workloads onto shared storage
   hosts: headnode
   become: true

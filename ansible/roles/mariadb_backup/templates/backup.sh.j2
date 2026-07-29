@@ -1,0 +1,33 @@
+#!/bin/bash
+# {{ ansible_managed }}
+set -euo pipefail
+
+BACKUP_DIR="{{ mariadb_backup_dir }}"
+RETENTION_DAYS="{{ mariadb_backup_retention_days }}"
+TEXTFILE_DIR="{{ mariadb_backup_textfile_dir }}"
+COMPOSE_FILE=/opt/mariadb/docker-compose.yml
+
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+OUT_FILE="${BACKUP_DIR}/mariadb-${TIMESTAMP}.sql.gz"
+trap 'rm -f "$OUT_FILE"' ERR
+
+export MYSQL_PWD="$(grep MARIADB_ROOT_PASSWORD "$COMPOSE_FILE" | cut -d= -f2)"
+docker exec -e MYSQL_PWD mariadb mariadb-dump -u root --all-databases --routines --events \
+  | gzip > "$OUT_FILE"
+unset MYSQL_PWD
+
+SIZE="$(stat -c%s "$OUT_FILE")"
+
+find "$BACKUP_DIR" -name 'mariadb-*.sql.gz' -mtime "+${RETENTION_DAYS}" -delete
+
+mkdir -p "$TEXTFILE_DIR"
+TMP_METRIC="${TEXTFILE_DIR}/mariadb_backup.prom.tmp"
+cat > "$TMP_METRIC" <<EOF
+# HELP mariadb_backup_last_success_timestamp_seconds Unix time of the last successful MariaDB backup
+# TYPE mariadb_backup_last_success_timestamp_seconds gauge
+mariadb_backup_last_success_timestamp_seconds $(date +%s)
+# HELP mariadb_backup_last_size_bytes Size in bytes of the last successful MariaDB backup
+# TYPE mariadb_backup_last_size_bytes gauge
+mariadb_backup_last_size_bytes ${SIZE}
+EOF
+mv "$TMP_METRIC" "${TEXTFILE_DIR}/mariadb_backup.prom"
