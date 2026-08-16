@@ -1,0 +1,5 @@
+---
+- name: Restart pcap dispatcher
+  ansible.builtin.systemd_service:
+    name: pcap-dispatcher
+    state: restarted

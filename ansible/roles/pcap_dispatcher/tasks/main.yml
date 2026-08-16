@@ -1,0 +1,33 @@
+---
+- name: Ensure NFS pcap-captures directory exists
+  ansible.builtin.file:
+    path: /apps/pcap-captures
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+
+- name: Deploy pcap dispatcher script
+  ansible.builtin.copy:
+    src: pcap_dispatcher.py
+    dest: /usr/local/bin/pcap_dispatcher.py
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart pcap dispatcher
+
+- name: Deploy pcap-dispatcher systemd unit
+  ansible.builtin.template:
+    src: pcap-dispatcher.service.j2
+    dest: /etc/systemd/system/pcap-dispatcher.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart pcap dispatcher
+
+- name: Ensure pcap-dispatcher is enabled and running
+  ansible.builtin.systemd_service:
+    name: pcap-dispatcher
+    daemon_reload: true
+    enabled: true
+    state: started

@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Alertmanager 재전송 급증 webhook을 받아 문제 노드에서 pcap을 캡처하는 디스패처
+After=network.target
+
+[Service]
+Type=simple
+User=head
+ExecStart=/usr/bin/python3 /usr/local/bin/pcap_dispatcher.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

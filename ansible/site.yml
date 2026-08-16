@@ -36,6 +36,8 @@
       tags: [prometheus_slurm_exporter]
     - role: observability_stack
       tags: [observability_stack]
+    - role: pcap_dispatcher
+      tags: [pcap_dispatcher]
 
 - name: Configure worker nodes
   hosts: workers
