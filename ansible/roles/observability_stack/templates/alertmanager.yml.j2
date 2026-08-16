@@ -6,6 +6,12 @@ route:
   group_interval: 5m
   repeat_interval: 4h
   routes:
+    - matchers:
+        - capture_pcap = "true"
+      receiver: pcap_capture
+      continue: true
+      group_wait: 10s
+      repeat_interval: 30m
     # critical: 자주 재알림
     - matchers:
         - severity = critical
@@ -28,3 +34,8 @@ receivers:
         auth_username: "{{ alertmanager_smtp_username }}"
         auth_password: "{{ alertmanager_smtp_password }}"
         require_tls: true
+
+  - name: pcap_capture
+    webhook_configs:
+      - url: 'http://localhost:9200/capture'
+        send_resolved: false
