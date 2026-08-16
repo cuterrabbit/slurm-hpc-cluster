@@ -1,6 +1,4 @@
 ---
-# Tetragon은 apt 패키지가 없다 — 공식 배포 방식이 tarball + install.sh 뿐이라
-# 버전 마커 파일로 직접 멱등성을 관리한다(ADR-0019 Phase 7a에서 확인한 설치 방식).
 - name: Check installed Tetragon version marker
   ansible.builtin.stat:
     path: /etc/tetragon/.tetragon_version
