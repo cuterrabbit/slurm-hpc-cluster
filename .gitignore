@@ -34,7 +34,7 @@ desktop.ini
 .vscode/*
 !.vscode/extensions.json
 
-# Terraform (이 프로젝트는 미사용 — ADR-0001 참조, 실수 커밋 방지용)
+# Terraform
 *.tfstate
 *.tfstate.backup
 .terraform/
@@ -42,6 +42,7 @@ desktop.ini
 # Logs
 *.log
 
-# Markdown: README만 공개. docs/ 아래는 전부 로컬 작업용 (ADR/증거/트러블슈팅 등).
+# Markdown: README만 공개
 *.md
 !README.md
+docs/
