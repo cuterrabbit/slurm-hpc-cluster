@@ -27,3 +27,12 @@ scrape_configs:
           job: munge
           host: "{{ inventory_hostname }}"
           __path__: /var/log/munge/*.log
+
+  - job_name: tetragon
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: tetragon
+          host: "{{ inventory_hostname }}"
+          __path__: /var/log/tetragon-enriched/*.json
