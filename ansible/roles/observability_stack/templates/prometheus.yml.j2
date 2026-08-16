@@ -32,3 +32,9 @@ scrape_configs:
       - targets:
           - 'node1:9798'
           - 'node2:9798'
+
+  - job_name: tetragon
+    static_configs:
+      - targets:
+          - 'node1:9799'
+          - 'node2:9799'

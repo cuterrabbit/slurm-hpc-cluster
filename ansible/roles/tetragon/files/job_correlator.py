@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import glob
+import http.server
 import json
 import os
 import re
@@ -15,11 +16,45 @@ REFRESH_INTERVAL_SECONDS = 2
 TETRAGON_SOCKET = "unix:///var/run/tetragon/tetragon.sock"
 TETRA_BIN = "/usr/local/bin/tetra"
 OUTPUT_PATH = "/var/log/tetragon-enriched/events.json"
+METRICS_PORT = 9799
 
 _exec_id_to_job = {}
 
 _pid_to_job = {}
 _pid_to_job_lock = threading.Lock()
+
+_retransmit_count = 0
+_retransmit_count_lock = threading.Lock()
+
+
+class MetricsHandler(http.server.BaseHTTPRequestHandler):
+
+
+    def do_GET(self):
+        if self.path != "/metrics":
+            self.send_response(404)
+            self.end_headers()
+            return
+        with _retransmit_count_lock:
+            count = _retransmit_count
+        body = (
+            "# HELP tetragon_tcp_retransmit_total Cumulative TCP retransmit events observed by Tetragon\n"
+            "# TYPE tetragon_tcp_retransmit_total counter\n"
+            f"tetragon_tcp_retransmit_total {count}\n"
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; version=0.0.4")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format, *args):
+        pass
+
+
+def metrics_server_loop():
+    server = http.server.HTTPServer(("0.0.0.0", METRICS_PORT), MetricsHandler)
+    server.serve_forever()
 
 
 def build_pid_to_job_map():
@@ -145,6 +180,9 @@ def main():
     refresher = threading.Thread(target=refresh_loop, daemon=True)
     refresher.start()
 
+    metrics_server = threading.Thread(target=metrics_server_loop, daemon=True)
+    metrics_server.start()
+
     proc = subprocess.Popen(
         [TETRA_BIN, "getevents", "-o", "json", "--host", TETRAGON_SOCKET],
         stdout=subprocess.PIPE,
@@ -171,6 +209,11 @@ def main():
             job_id_str = job_id if job_id is not None else "none"
             event["slurm_job_id"] = job_id_str
             event["summary"] = build_summary(event_kind, event[event_kind], process, job_id_str)
+
+            if event_kind == "process_kprobe" and event[event_kind].get("function_name") == "tcp_retransmit_skb":
+                global _retransmit_count
+                with _retransmit_count_lock:
+                    _retransmit_count += 1
 
             if event_kind == "process_exit":
                 forget_exec_id(process)
