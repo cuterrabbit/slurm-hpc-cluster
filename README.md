@@ -4,7 +4,7 @@
 
 > **Note:** 이 저장소는 코드가 아니라 물리 인프라를 관리합니다 — `main`에 push하면 GitHub Actions를 통해 self-hosted CI 러너가 `ansible-playbook site.yml`을 실제 클러스터에 적용합니다.
 
-*빠르게 보려면 → [핵심 기능](#features) · [트러블슈팅](#troubleshooting)*
+*빠르게 보려면 → [핵심 기능](#features)*
 
 ![Ansible](https://img.shields.io/badge/Ansible-EE0000?style=flat-square&logo=ansible&logoColor=white)
 ![Slurm](https://img.shields.io/badge/Slurm-003B6F?style=flat-square)
@@ -192,6 +192,20 @@ Optuna storage를 NFS 위 SQLite 파일로 줬을 때와 MariaDB로 줬을 때�
 
 계정 2개(`team_a` fairshare=1, `team_b` fairshare=3)로 자원 경쟁 상황에서 우선순위가 실제로 사용량에 따라 갈리는지 검증했습니다.
 
+```mermaid
+flowchart LR
+    subgraph R1["1라운드 (사용 이력 0)"]
+        direction LR
+        a1[team_a] -->|우선순위 승| x1[RUNNING ×6]
+        b1[team_b] -->|FIFO 밀림| y1[PENDING ×6]
+    end
+    subgraph R2["2라운드 (team_a 사용량 누적)"]
+        direction LR
+        a2[team_a] -->|우선순위 하락| y2[PENDING ×6]
+        b2[team_b] -->|우선순위 회복| x2[RUNNING ×6]
+    end
+```
+
 | 라운드 | 조건 | 결과 |
 |---|---|---|
 | 1라운드 | 양쪽 다 사용 이력 0, 동시 제출 | 우선순위 동률 → 먼저 제출한 `team_a` 6개 전부 실행, `team_b` 6개는 대기(FIFO 타이브레이크) |
@@ -203,12 +217,12 @@ Optuna storage를 NFS 위 SQLite 파일로 줬을 때와 MariaDB로 줬을 때�
 
 <a id="load-test-wireshark"></a>
 <details>
-<summary><strong>🦈 3-4. pcap 실측 — Slurm 제어 프로토콜 캡처</strong></summary>
+<summary><strong>🦈 3-4. Slurm 제어 프로토콜 캡처</strong></summary>
 <br>
 
 재전송 자동 캡처 파이프라인([2-5](#feature-netobs))이 회수한 pcap을 직접 열어보니, node1과 head 사이에 SlurmctldPort(6817)·SlurmdPort(6818)로 오가는 실제 Slurm RPC가 잡혔습니다. 페이로드에 MUNGE 인증 크리덴셜이 실린 것까지 패킷 단위로 확인했습니다 — SYN부터 FIN까지 왕복이 20ms 안에 끝나는, Slurm 제어 트래픽 특유의 짧고 인증된 RPC 패턴입니다.
 
-<img src="assets/wireshark-slurm-rpc.png" alt="Slurm 제어 프로토콜 RPC — MUNGE 인증 캡처" width="100%">
+<img src="assets/wireshark-slurm-rpc.png" alt="Slurm 제어 프로토콜 RPC" width="100%">
 
 </details>
 
@@ -218,6 +232,52 @@ Optuna storage를 NFS 위 SQLite 파일로 줬을 때와 MariaDB로 줬을 때�
 
 ## 🧯 4. 트러블슈팅
 
+<a id="ts-root-squash"></a>
+<details>
+<summary><strong>🔒 4-1. NFS root_squash가 Ansible의 root 작업을 막음</strong></summary>
+<br>
+
+보안 기본값(`root_squash`)이 워커의 root를 서버에서 익명 사용자로 강등시켜서, Ansible이 공유 홈 디렉터리를 관리하지 못하는 문제였습니다. 처음엔 전체 완화로 풀었다가, 나중에 실제로 root 쓰기가 필요한 지점을 전수 조사해서 범위를 필요한 디렉터리 하나로 좁혔습니다.
+
+</details>
+
+<a id="ts-pid-race"></a>
+<details>
+<summary><strong>🏃 4-2. correlator PID 조인 레이스</strong></summary>
+<br>
+
+Tetragon 이벤트엔 Slurm Job ID 필드가 없어서 cgroup 폴링(2초 주기)만으로 PID→JobID 매핑을 만들었는데, `process_exec` 이벤트가 폴링보다 먼저 도착해 `job=none`으로 찍히는 순간이 있었습니다.
+
+**이전 — 폴링만**
+
+```mermaid
+sequenceDiagram
+    participant P as 프로세스
+    participant T as Tetragon
+    participant C as correlator
+    participant CG as cgroup 폴링(2s 주기)
+
+    P->>T: exec (job 173의 자식 프로세스)
+    T->>C: process_exec 이벤트
+    C-->>C: PID→JobID 캐시에 없음 → slurm_job_id="none"
+    Note over CG: 2초 후
+    CG->>C: cgroup.procs 갱신 (너무 늦음)
+```
+
+**이후 — exec 체인 우선**
+
+```mermaid
+sequenceDiagram
+    participant P as 프로세스
+    participant T as Tetragon
+    participant C as correlator
+
+    P->>T: exec (job 173의 자식 프로세스)
+    T->>C: process_exec 이벤트 (parent_exec_id 포함)
+    C-->>C: 부모의 캐시된 job_id 즉시 상속 → slurm_job_id="173"
+```
+
+</details>
 
 ---
 
