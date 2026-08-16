@@ -101,6 +101,30 @@ def process_and_parent(event):
     return None, None, None
 
 
+def build_summary(event_kind, payload, process, job_id):
+    pid = process.get("pid")
+    binary = process.get("binary") or "?"
+    prefix = f"[job={job_id}]"
+
+    if event_kind == "process_exec":
+        return f"{prefix} exec {binary} (pid={pid})"
+    if event_kind == "process_exit":
+        return f"{prefix} exit {binary} (pid={pid})"
+    if event_kind == "process_kprobe":
+        function_name = payload.get("function_name") or "?"
+        detail = ""
+        for arg in payload.get("args", []):
+            sock = arg.get("sock_arg")
+            if sock:
+                detail = (
+                    f" {sock.get('saddr')}:{sock.get('sport')} -> "
+                    f"{sock.get('daddr')}:{sock.get('dport')} [{sock.get('state')}]"
+                )
+                break
+        return f"{prefix} {function_name} {binary} (pid={pid}){detail}"
+    return f"{prefix} {event_kind}"
+
+
 def wait_for_socket(path, timeout_seconds=60):
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
@@ -144,7 +168,9 @@ def main():
                 continue
 
             job_id = determine_job_id(process, parent)
-            event["slurm_job_id"] = job_id if job_id is not None else "none"
+            job_id_str = job_id if job_id is not None else "none"
+            event["slurm_job_id"] = job_id_str
+            event["summary"] = build_summary(event_kind, event[event_kind], process, job_id_str)
 
             if event_kind == "process_exit":
                 forget_exec_id(process)
