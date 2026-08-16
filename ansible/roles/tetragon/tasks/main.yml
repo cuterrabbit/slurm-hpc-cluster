@@ -42,6 +42,7 @@
   args:
     chdir: "/tmp/tetragon-v{{ tetragon_version }}-amd64"
   when: tetragon_needs_install
+  changed_when: true
   notify: Restart tetragon
 
 - name: Record installed Tetragon version
