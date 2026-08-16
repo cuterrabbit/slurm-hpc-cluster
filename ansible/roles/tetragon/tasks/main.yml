@@ -16,9 +16,16 @@
       {{ not tetragon_version_marker.stat.exists or
          (tetragon_installed_version_raw.content | b64decode | trim) != tetragon_version }}
 
+- name: Set Tetragon download URL
+  ansible.builtin.set_fact:
+    tetragon_download_url: >-
+      {{ 'https://github.com/cilium/tetragon/releases/download/v' ~
+      tetragon_version ~ '/tetragon-v' ~ tetragon_version ~ '-amd64.tar.gz' }}
+  when: tetragon_needs_install
+
 - name: Download Tetragon release tarball
   ansible.builtin.get_url:
-    url: "https://github.com/cilium/tetragon/releases/download/v{{ tetragon_version }}/tetragon-v{{ tetragon_version }}-amd64.tar.gz"
+    url: "{{ tetragon_download_url }}"
     dest: "/tmp/tetragon-v{{ tetragon_version }}-amd64.tar.gz"
     mode: '0644'
   when: tetragon_needs_install
