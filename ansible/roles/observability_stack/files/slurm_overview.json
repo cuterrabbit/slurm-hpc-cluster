@@ -4,7 +4,7 @@
   "tags": ["slurm"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 5,
+  "version": 6,
   "refresh": "30s",
   "time": { "from": "now-6h", "to": "now" },
   "templating": {
@@ -168,12 +168,23 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "디스크 I/O 처리량",
+      "title": "디스크 읽기 처리량",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 24, "w": 6, "h": 8 },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_disk_read_bytes_total{instance=~\"$node\", device=\"sda\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} SSD 읽기", "refId": "A" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_disk_written_bytes_total{instance=~\"$node\", device=\"sda\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} SSD 쓰기", "refId": "B" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_disk_read_bytes_total{instance=~\"$node\", device=\"sda\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "Bps", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "디스크 쓰기 처리량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 6, "y": 24, "w": 6, "h": 8 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_disk_written_bytes_total{instance=~\"$node\", device=\"sda\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}}", "refId": "A" }
       ],
       "fieldConfig": { "defaults": { "unit": "Bps", "min": 0 }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
@@ -181,14 +192,27 @@
     {
       "id": 13,
       "type": "timeseries",
-      "title": "네트워크 처리량",
+      "title": "네트워크 처리량 (NAT)",
+      "description": "head만 NAT 어댑터(enp0s3)가 있어서 워커는 값이 안 나옵니다 — 아키텍처상 정상입니다.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 24, "w": 6, "h": 8 },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_receive_bytes_total{instance=~\"$node\", device=\"enp0s3\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} NAT 수신", "refId": "A" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_receive_bytes_total{instance=~\"$node\", device=\"enp0s8\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 호스트전용 수신", "refId": "B" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_transmit_bytes_total{instance=~\"$node\", device=\"enp0s3\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} NAT 송신", "refId": "C" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_transmit_bytes_total{instance=~\"$node\", device=\"enp0s8\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 호스트전용 송신", "refId": "D" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_receive_bytes_total{instance=~\"$node\", device=\"enp0s3\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 수신", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_transmit_bytes_total{instance=~\"$node\", device=\"enp0s3\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 송신", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "Bps", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "네트워크 처리량 (호스트 전용)",
+      "description": "클러스터 내부망(192.168.56.0/24, enp0s8) 트래픽 — NFS, munge, Slurm 통신 등이 전부 여기 잡힙니다.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 18, "y": 24, "w": 6, "h": 8 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_receive_bytes_total{instance=~\"$node\", device=\"enp0s8\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 수신", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "label_replace(rate(node_network_transmit_bytes_total{instance=~\"$node\", device=\"enp0s8\"}[5m]), \"node\", \"$1\", \"instance\", \"([^:]+):.*\")", "legendFormat": "{{node}} 송신", "refId": "B" }
       ],
       "fieldConfig": { "defaults": { "unit": "Bps", "min": 0 }, "overrides": [] },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
@@ -226,7 +250,35 @@
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
     },
 
-    { "id": 102, "type": "row", "title": "잡 · 스케줄러", "gridPos": { "x": 0, "y": 38, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+    { "id": 106, "type": "row", "title": "네트워크 관측 (Tetragon)", "gridPos": { "x": 0, "y": 38, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+
+    {
+      "id": 60,
+      "type": "timeseries",
+      "title": "재전송(retransmit) 발생 추이",
+      "description": "TCP 재전송 = 패킷 손실/혼잡 신호. 정상 네트워크에서는 0에 가까워야 함. host 라벨은 promtail이 스크레이프 시점에 붙인 것.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 0, "y": 39, "w": 12, "h": 10 },
+      "targets": [
+        { "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum by (host) (count_over_time({job=\"tetragon\"} |= \"tcp_retransmit_skb\" [$__interval]))", "legendFormat": "{{host}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 61,
+      "type": "logs",
+      "title": "최근 네트워크 이벤트",
+      "description": "tcp_connect/tcp_close/tcp_retransmit_skb를 조인기가 미리 만든 한 줄 요약(job/함수/pid/주소)으로 표시. 원본 JSON 전체를 보려면 패널 오른쪽 위에서 wrap 끄고 라인 클릭.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 12, "y": 39, "w": 12, "h": 10 },
+      "targets": [
+        { "datasource": { "type": "loki", "uid": "loki" }, "expr": "{job=\"tetragon\"} |= \"tcp_\" | json | line_format \"{{.summary}}\"", "refId": "A" }
+      ],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+
+    { "id": 102, "type": "row", "title": "잡 · 스케줄러", "gridPos": { "x": 0, "y": 49, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
 
     {
       "id": 20,
@@ -234,7 +286,7 @@
       "title": "실행 중인 잡 — 코어 실사용률",
       "description": "잡별 요청 대비 실사용률(%). 테이블이라 잡이 생기고 없어져도 legend가 안 늘어남 — 열 헤더 클릭으로 정렬(낮은 순으로 보면 비효율 잡부터 확인 가능).",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 39, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 50, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -262,7 +314,7 @@
       "title": "잡 메모리 사용량 vs 한도",
       "description": "cgroup 기준 실제 메모리(RSS)와 잡에 할당된 메모리 한도 — Phase 5에서 겪은 OOM 문제를 실시간으로 볼 수 있는 패널. 한도에 가까워지면 OOM 위험.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 12, "y": 39, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 50, "w": 12, "h": 8 },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "slurm_job_memory_rss", "legendFormat": "job {{slurmjobid}} ({{user}}) 실사용", "refId": "A" },
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "slurm_job_memory_limit", "legendFormat": "job {{slurmjobid}} ({{user}}) 한도", "refId": "B" }
@@ -278,7 +330,7 @@
       "title": "비효율 잡 수 추이 (실사용률 < 40%)",
       "description": "InefficientJob 알림 규칙과 동일 기준. 이 선이 계속 0보다 크면 클러스터 자원이 낭비되고 있다는 뜻.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 47, "w": 24, "h": 6 },
+      "gridPos": { "x": 0, "y": 58, "w": 24, "h": 6 },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "count((sum by (slurmjobid) (rate(slurm_job_core_usage_total[3m])) / 1e9) / (count by (slurmjobid) (slurm_job_core_usage_total)) < 0.4) or vector(0)", "legendFormat": "비효율 잡 수", "refId": "A" }
       ],
@@ -286,14 +338,14 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } }
     },
 
-    { "id": 103, "type": "row", "title": "로그", "gridPos": { "x": 0, "y": 53, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+    { "id": 103, "type": "row", "title": "로그", "gridPos": { "x": 0, "y": 64, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
 
     {
       "id": 30,
       "type": "logs",
       "title": "전체 로그 (slurm / munge)",
       "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "x": 0, "y": 54, "w": 12, "h": 10 },
+      "gridPos": { "x": 0, "y": 65, "w": 12, "h": 10 },
       "targets": [
         { "datasource": { "type": "loki", "uid": "loki" }, "expr": "{job=~\"slurm|munge\"}", "refId": "A" }
       ],
@@ -305,21 +357,21 @@
       "title": "에러 / 경고 로그만",
       "description": "promtail이 자동으로 붙이는 detected_level 라벨 기준 필터",
       "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "x": 12, "y": 54, "w": 12, "h": 10 },
+      "gridPos": { "x": 12, "y": 65, "w": 12, "h": 10 },
       "targets": [
         { "datasource": { "type": "loki", "uid": "loki" }, "expr": "{job=~\"slurm|munge\"} | detected_level=~\"error|warn\"", "refId": "A" }
       ],
       "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" }
     },
 
-    { "id": 104, "type": "row", "title": "알림", "gridPos": { "x": 0, "y": 64, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+    { "id": 104, "type": "row", "title": "알림", "gridPos": { "x": 0, "y": 75, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
 
     {
       "id": 40,
       "type": "table",
       "title": "현재 발화 중인 알림",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 65, "w": 24, "h": 6 },
+      "gridPos": { "x": 0, "y": 76, "w": 24, "h": 6 },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "ALERTS{alertstate=\"firing\"}", "format": "table", "instant": true, "refId": "A" }
       ],
@@ -330,7 +382,7 @@
       ]
     },
 
-    { "id": 105, "type": "row", "title": "백업", "gridPos": { "x": 0, "y": 71, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
+    { "id": 105, "type": "row", "title": "백업", "gridPos": { "x": 0, "y": 82, "w": 24, "h": 1 }, "collapsed": false, "panels": [] },
 
     {
       "id": 50,
@@ -338,7 +390,7 @@
       "title": "마지막 백업까지 경과 시간",
       "description": "MariaDB 백업 성공 이후 경과 시간. 24시간 넘으면 MariaDBBackupStale 알림과 같은 기준으로 빨간색.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 72, "w": 12, "h": 6 },
+      "gridPos": { "x": 0, "y": 83, "w": 12, "h": 6 },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "time() - mariadb_backup_last_success_timestamp_seconds", "refId": "A", "instant": true }
       ],
@@ -359,7 +411,7 @@
       "type": "stat",
       "title": "마지막 백업 크기",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 12, "y": 72, "w": 12, "h": 6 },
+      "gridPos": { "x": 12, "y": 83, "w": 12, "h": 6 },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "mariadb_backup_last_size_bytes", "refId": "A", "instant": true }
       ],
