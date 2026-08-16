@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Tetragon 이벤트에 Slurm job ID를 붙이는 조인기
+After=network.target tetragon.service
+Requires=tetragon.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/tetragon_job_correlator.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

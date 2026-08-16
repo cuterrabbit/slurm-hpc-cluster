@@ -1,0 +1,11 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: "retransmit"
+spec:
+  kprobes:
+  - call: "tcp_retransmit_skb"
+    syscall: false
+    args:
+    - index: 0
+      type: "sock"

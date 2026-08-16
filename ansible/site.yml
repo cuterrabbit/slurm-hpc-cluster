@@ -47,6 +47,8 @@
       tags: [slurm_d]
     - role: cgroup_exporter
       tags: [cgroup_exporter]
+    - role: tetragon
+      tags: [tetragon]
 
 - name: Configure execution environment (all nodes)
   hosts: cluster

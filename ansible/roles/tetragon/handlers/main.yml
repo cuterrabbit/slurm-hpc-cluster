@@ -1,0 +1,10 @@
+---
+- name: Restart tetragon
+  ansible.builtin.systemd_service:
+    name: tetragon
+    state: restarted
+
+- name: Restart tetragon job correlator
+  ansible.builtin.systemd_service:
+    name: tetragon-job-correlator
+    state: restarted

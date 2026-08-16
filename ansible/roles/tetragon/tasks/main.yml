@@ -1,0 +1,111 @@
+---
+# Tetragon은 apt 패키지가 없다 — 공식 배포 방식이 tarball + install.sh 뿐이라
+# 버전 마커 파일로 직접 멱등성을 관리한다(ADR-0019 Phase 7a에서 확인한 설치 방식).
+- name: Check installed Tetragon version marker
+  ansible.builtin.stat:
+    path: /etc/tetragon/.tetragon_version
+  register: tetragon_version_marker
+
+- name: Read installed Tetragon version
+  ansible.builtin.slurp:
+    src: /etc/tetragon/.tetragon_version
+  register: tetragon_installed_version_raw
+  when: tetragon_version_marker.stat.exists
+
+- name: Determine whether Tetragon install/upgrade is needed
+  ansible.builtin.set_fact:
+    tetragon_needs_install: >-
+      {{ not tetragon_version_marker.stat.exists or
+         (tetragon_installed_version_raw.content | b64decode | trim) != tetragon_version }}
+
+- name: Download Tetragon release tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/tetragon/releases/download/v{{ tetragon_version }}/tetragon-v{{ tetragon_version }}-amd64.tar.gz"
+    dest: "/tmp/tetragon-v{{ tetragon_version }}-amd64.tar.gz"
+    mode: '0644'
+  when: tetragon_needs_install
+
+- name: Extract Tetragon tarball
+  ansible.builtin.unarchive:
+    src: "/tmp/tetragon-v{{ tetragon_version }}-amd64.tar.gz"
+    dest: /tmp
+    remote_src: true
+  when: tetragon_needs_install
+
+- name: Run Tetragon install.sh
+  ansible.builtin.command: ./install.sh
+  args:
+    chdir: "/tmp/tetragon-v{{ tetragon_version }}-amd64"
+  when: tetragon_needs_install
+  notify: Restart tetragon
+
+- name: Record installed Tetragon version
+  ansible.builtin.copy:
+    content: "{{ tetragon_version }}"
+    dest: /etc/tetragon/.tetragon_version
+    owner: root
+    group: root
+    mode: '0644'
+  when: tetragon_needs_install
+
+- name: Ensure Tetragon tracing policy directory exists
+  ansible.builtin.file:
+    path: /etc/tetragon/tetragon.tp.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+# 기본값(--tracing-policy-dir=/etc/tetragon/tetragon.tp.d)이 기동 시 이 디렉터리를 읽어서
+# tetra tracingpolicy add로 넣었던 것과 달리 재시작해도 정책이 유지된다.
+- name: Deploy Tetragon tracing policies
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/tetragon/tetragon.tp.d/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - tcp-connect.yaml
+    - tcp-retransmit.yaml
+  notify: Restart tetragon
+
+- name: Ensure Tetragon is enabled and running
+  ansible.builtin.systemd_service:
+    name: tetragon
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Ensure Tetragon enriched log directory exists
+  ansible.builtin.file:
+    path: /var/log/tetragon-enriched
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy PID-to-JobID correlator script
+  ansible.builtin.copy:
+    src: job_correlator.py
+    dest: /usr/local/bin/tetragon_job_correlator.py
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart tetragon job correlator
+
+- name: Deploy tetragon-job-correlator systemd unit
+  ansible.builtin.template:
+    src: tetragon-job-correlator.service.j2
+    dest: /etc/systemd/system/tetragon-job-correlator.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart tetragon job correlator
+
+- name: Ensure tetragon-job-correlator is enabled and running
+  ansible.builtin.systemd_service:
+    name: tetragon-job-correlator
+    daemon_reload: true
+    enabled: true
+    state: started
